@@ -3,7 +3,8 @@ Scripts
 Scripts de uso geral para o Dataminer. 
 
 Usando Python
-Para usar os scripts, você precisa ter o Python instalado.
+
+Para usar os scripts, você precisa ter o Python instalado
 Baixe-o em https://www.python.org/downloads/.
 Quando instalar, selecione a opção "Add python to PATH".
 Cada script terá suas instruções de uso. Em geral, serão usados da seguinte forma:
@@ -12,4 +13,5 @@ Cada script terá suas instruções de uso. Em geral, serão usados da seguinte 
 3. Rode o script com o comando "python *script.py* *parâmetros adicionais*
 
 Instalando dependências
+
 Quando um script listar dependências, instale-as antes de usá-lo com o comando pip install *nome da dependência* no prompt de comando.
