@@ -1,4 +1,5 @@
 Scripts
+
 Scripts de uso geral para o Dataminer. 
 
 Usando Python
