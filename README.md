@@ -14,12 +14,12 @@ Instalando dependências
 Quando um script listar dependências, instale-as antes de usá-lo com o comando "pip install *nome da dependência*" no prompt de comando.
 
 ## Scripts contidos neste repositório
-### Organizador e Revisor de Logos
+### Categorizador e Revisor de Logos
 *Categoriza logos em pastas de acordo com categorias, subcategorias e nomes contidos em um arquivo .csv. Exige um CSV de startups com as colunas 'Nome', 'Categoria', 'Subcategoria' e 'Site'. Os logos devem ter nomes de arquivo iguais ao nome da startup correspondente. O script ignora acentos, espaços e diferenças entre letras maiúsculas e minúsculas. Ao fim, ele também indica quais startups ficaram sem logo e vice versa, poupando o trabalho de revisão.*
 
 **Input**: uma pasta de logos sem categorização  
 **Output**: uma pasta de logos categorizados em subpastas, assim como uma lista de logos que não têm startup correspondente e startups do csv que ficaram sem logo.  
-**Script**: organizadorDeLogos.py  
+**Script**: categorizadorDeLogos.py  
 **Dependências**: unidecode  
 
 Uso:
