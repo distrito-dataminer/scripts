@@ -17,7 +17,7 @@ Quando um script listar dependências, instale-as antes de usá-lo com o comando
 ### Categorizador e Revisor de Logos
 *Categoriza logos em pastas de acordo com categorias, subcategorias e nomes contidos em um arquivo .csv. Exige um CSV de startups com as colunas 'Nome', 'Categoria', 'Subcategoria' e 'Site'. Os logos devem ter nomes de arquivo iguais ao nome da startup correspondente. O script ignora acentos, espaços e diferenças entre letras maiúsculas e minúsculas. Ao fim, ele também indica quais startups ficaram sem logo e vice versa, poupando o trabalho de revisão.*
 
-**Input**: uma pasta de logos sem categorização  
+**Input**: Um csv e uma pasta de logos sem categorização  
 **Output**: uma pasta de logos categorizados em subpastas, assim como uma lista de logos que não têm startup correspondente e startups do csv que ficaram sem logo.  
 **Script**: categorizadorDeLogos.py  
 **Dependências**: unidecode  
@@ -29,4 +29,20 @@ Uso:
 Exemplo:
 
     > python organizadorDeLogos.py logos.csv "C:\logos" "C:\logos categorizados"
+
+### Site Scraper
+*Coleta informações relevantes sobre startups a partir de um arquivo .csv que contenha seus nome e sites. O script coleta CNPJ (que busca no site principal, página de Termos e página de Privacidade), LinkedIn, Facebook, Instagram, Twitter, e Crunchbase. O csv deve conter no mínimo as colunas 'Nome' e 'Site'. Ele também salva uma coluna 'Response' - qualquer valor diferente de 200 indica que houve algum problema na conexão com o site.*
+
+**Input**: um csv contendo nomes e sites de startups.  
+**Output**: um csv populado com informações coletadas sobre as startups a partir de seus sites.
+**Script**: siteScraper.py  
+**Dependências**: bs4, requests  
+
+Uso:
+
+    > python siteScraper.py [csv] [opcional: 'noreplace' - não substitui informações que já existam no csv]
+
+Exemplo:
+
+    > python organizadorDeLogos.py base.csv
 
