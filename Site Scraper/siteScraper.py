@@ -99,6 +99,15 @@ def getCnpj(content):
         print("Mais de um CNPJ encontrado: " + str(result))
     return result
 
+# TODO: buscar CNPJ no registro do site no registro.br
+def getRegistro(url):
+    url = url.strip('/').replace('http://', '')
+    if url[-3:] == ".br":
+        print("CNPJ pode estar no registro do domínio! Verificar WHOIS.")
+        return "VERIFICAR DOMÍNIO!"
+    else:
+        return "null"
+
 # Busca links para páginas de empresa no LinkedIn e retorna os resultados
 def getLinkedin(content):
     lkdRegex = re.compile(r"linkedin\.com\/company\/[^&?]*", re.IGNORECASE)
@@ -209,6 +218,8 @@ for startup in startupList:
         continue
     if noReplace == False:
         startup['CNPJ'] = getCnpj(site)
+        if startup['CNPJ'] == "null":
+            startup['CNPJ'] = getRegistro(startup['Site'])
         startup['LinkedIn'] = getLinkedin(site)
         startup['Facebook'] = getFacebook(site)
         startup['Twitter'] = getTwitter(site)
