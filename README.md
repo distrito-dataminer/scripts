@@ -46,3 +46,18 @@ Exemplo:
 
     > python organizadorDeLogos.py base.csv
 
+### Link to LinkedIn
+*Usando a API Google Custom Search, faz uma busca pelo LinkedIn de uma empresa a partir do formato [site:linkedin.com/company/ [site da startup]]. Retorna um csv com o LinkedIn preenchido e um indicativo da necessidade de revisão, pois os resultados nem sempre trazem a startup que se busca.*
+
+**Input**: um csv contendo nomes e sites de startups.  
+**Output**: um csv populado com URLs do LinkedIn correspondentes e indicativo da necessidade de revisão.
+**Script**: linkToLinkedin.py
+**Dependências**: google-api-python-client [**Atenção!** Este script usa uma API do Google e para isso é necessário configurar uma chave para uso. O Dataminer tem uma conta. Mais detalhes em console.developers.google.com]
+
+Uso:
+
+    > python linkToLinkedin.py [csv] [opcional: 'noreplace' - não substitui informações que já existam no csv]
+
+Exemplo:
+
+    > python linkToLinkedin.py startups.csv noreplace
