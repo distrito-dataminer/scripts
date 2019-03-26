@@ -53,6 +53,9 @@ def getSite(site):
 def scrapeCnpj(content):
     cnpjRegex = re.compile(r"\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}")
     results = cnpjRegex.findall(content.text)
+    for item in results:
+        mo = cnpjRegex.search(item)
+        item = mo.group()
     return results
 
 # Busca links na página contendo "termos" ou "terms" e retorna uma lista deles
@@ -110,7 +113,7 @@ def getRegistro(url):
 
 # Busca links para páginas de empresa no LinkedIn e retorna os resultados
 def getLinkedin(content):
-    lkdRegex = re.compile(r"linkedin\.com\/company\/[^&?]*", re.IGNORECASE)
+    lkdRegex = re.compile(r"linkedin\.com\/company\/[^&?\/]*", re.IGNORECASE)
     soupResults = content.find_all("a", href=lkdRegex)
     result = []
     for item in soupResults:
@@ -150,7 +153,7 @@ def getFacebook(content):
 
 # Busca links para o Instagram e retorna os resultados
 def getInstagram(content):
-    igRegex = re.compile(r"instagram\.com\/[^&?].*", re.IGNORECASE)
+    igRegex = re.compile(r"instagram\.com\/[^&?\/].*", re.IGNORECASE)
     soupResults = content.find_all("a", href=igRegex)
     result = []
     for item in soupResults:
@@ -169,7 +172,7 @@ def getInstagram(content):
 
 # Busca links para o Twitter e retorna os resultados
 def getTwitter(content):
-    ttRegex = re.compile(r"twitter\.com\/[^&?].*", re.IGNORECASE)
+    ttRegex = re.compile(r"twitter\.com\/[^&?\/].*", re.IGNORECASE)
     soupResults = content.find_all("a", href=ttRegex)
     result = []
     for item in soupResults:
@@ -188,7 +191,7 @@ def getTwitter(content):
 
 # Busca links para páginas de organização do Crunchbase e retorna os resultados
 def getCrunchbase(content):
-    cbRegex = re.compile(r"crunchbase\.com\/organization\/.*$", re.IGNORECASE)
+    cbRegex = re.compile(r"crunchbase\.com\/organization\/[^&?\/]*", re.IGNORECASE)
     soupResults = content.find_all("a", href=cbRegex)
     result = []
     for item in soupResults:
