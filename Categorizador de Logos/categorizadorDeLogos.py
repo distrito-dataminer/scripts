@@ -9,8 +9,8 @@ import re, csv, os, shutil, sys, unidecode
 
 # Informa o usuário do uso correto caso os argumentos não sejam passados
 if len(sys.argv) != 4:
-    print("Uso: python categorizadorLogos.py [csv] [pasta com logos] [pasta destino]")
-    print("Exemplo: python categorizadorDeLogos.py C:\\logos.csv C:\\test\ C:\\test2\\")
+    print(r"Uso: python categorizadorLogos.py [csv] [pasta com logos] [pasta destino]")
+    print(r"Exemplo: python categorizadorDeLogos.py C:\logos.csv C:\test\ C:\test2\")
     sys.exit()
 
 # Garante que os paths vão terminar com \    

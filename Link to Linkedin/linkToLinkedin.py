@@ -7,7 +7,7 @@ import sys, csv, shutil, datetime
 from googleapiclient.discovery import build
 
 # Conecta na API do Google com a chave de API providenciada
-service = build("customsearch", "v1", developerKey="INSERT DEV KEY")
+service = build("customsearch", "v1", developerKey="AIzaSyCitxXqhnfeZdhiw85he62pRu_LGm_0wzU")
 
 file = sys.argv[1]
 noReplace = False
@@ -33,7 +33,7 @@ outputWriter.writeheader()
 # Faz uma busca com o site da startup como query no LinkedIn
 for startup in startupList:
     if (noReplace == True) and "LinkedIn" in startup.keys():
-        if startup['LinkedIn'] != "":
+        if (startup['LinkedIn'] != ("" or "null")):
             print("LinkedIn for " + startup['Nome'] + " already present.\n")
             startup['Revisar LinkedIn'] = "NÃO"
             outputWriter.writerow(startup)

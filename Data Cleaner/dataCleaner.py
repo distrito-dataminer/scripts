@@ -6,6 +6,39 @@
 
 import sys, csv, re
 from collections import OrderedDict
+from unidecode import unidecode
+
+siglas = {
+    "acre": "AC",
+    "alagoas": "AL",
+    "amapa": "AP",
+    "amazonas": "AM",
+    "bahia": "BA",
+    "ceara": "CE",
+    "distritofederal": "DF",
+    "espiritosanto": "ES",
+    "goias": "GO",
+    "maranhao": "MA",
+    "matogrosso": "MT",
+    "matogrossodosul": "MS",
+    "minasgerais": "MG",
+    "para": "PA",
+    "paraiba": "PB",
+    "parana": "PR",
+    "pernambuco": "PE",
+    "piaui": "PI",
+    "riodejaneiro": "RJ",
+    "riograndedonorte": "RN",
+    "riograndedosul": "RS",
+    "rondonia": "RO",
+    "roraima": "RR",
+    "santacatarina": "SC",
+    "saopaulo": "SP",
+    "sergipe": "SE",
+    "tocantins": "TO"
+}
+
+exceptionList = ["Descrição"]
 
 # Popula um dicionário com as informações do CSV
 startupList = []
@@ -26,10 +59,13 @@ for startup in startupList:
 # Limpa o CNPJ, adicionando 0s que o Excel come e tirando símbolos
     if 'CNPJ' in startup:
         if (startup['CNPJ'] != "") and (startup['CNPJ'] != "null"):
-            newCnpj = startup['CNPJ'].replace('.', '').replace('-', '').replace('/', '')
+            newCnpj = re.sub(r'[^\d]', '', startup['CNPJ'])
             while len(newCnpj) < 14:
                 newCnpj = '0' + newCnpj
-            startup['CNPJ'] = newCnpj
+            if newCnpj != '00000000000000':
+                startup['CNPJ'] = newCnpj
+            else:
+                startup['CNPJ'] = ""
 
 # Limpa o site, mantendo formato consistente e letras minúsculas
     if 'Site' in startup:
@@ -93,6 +129,16 @@ for startup in startupList:
             if mo != None:
                 newCb = "http://" + mo.group().lower().strip()
                 startup['Crunchbase'] = newCb
+
+# Transforma o Estado em sigla
+    if 'Estado' in startup:
+        if unidecode(startup['Estado'].lower().replace(" ", "")) in siglas.keys():
+            startup['Estado'] = siglas[unidecode(startup['Estado'].lower().replace(" ", ""))]
+
+# Tira newlines e substitui por vírgulas pra separar mais de um item por célula
+    for key in startup:
+        if key not in exceptionList:
+            startup[key] = startup[key].replace("\n", ",")
 
     outputWriter.writerow(startup)
 
