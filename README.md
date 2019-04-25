@@ -2,7 +2,7 @@
 
 Scripts de uso geral para o Dataminer. 
 
-### Usando Python
+### Usando o Python
 
 Para usar os scripts, você precisa ter o Python instalado. Baixe-o em https://www.python.org/downloads/. Quando instalar, selecione a opção "Add python to PATH". Cada script terá suas instruções de uso. Em geral, serão usados da seguinte forma:
 1. Abra o prompt de comando (Win+R, escreva "cmd" e aperte enter)
@@ -61,3 +61,21 @@ Uso:
 Exemplo:
 
     > python linkToLinkedin.py startups.csv noreplace
+
+### Data Cleaner
+*Limpa dados de uma base de startups de acordo com os parâmetros do Distrito Dataminer.*
+*Transforma URLs para o formato http:// sem / no final e sem www. Verifica se os CNPJs têm o número correto de dígitos (pois o Excel tende a comer 0s à esquerda) e tira os símbolos (-, ., /) deles.*
+*Atualmente limpa Site, CNPJ, LinkedIn, Facebook, Instagram, Twitter e Crunchbase.*
+
+**Input**: um csv contendo informações de startups.  
+**Output**: um csv com as mesmas informações limpas
+**Script**: dataCleaner.py
+**Dependências**: 
+
+Uso:
+
+    > python dataCleaner.py [csv]
+
+Exemplo:
+
+    > python dataCleaner.py startups.csv 
