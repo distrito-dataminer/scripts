@@ -38,8 +38,6 @@ siglas = {
     "tocantins": "TO"
 }
 
-exceptionList = ["Descrição"]
-
 # Popula um dicionário com as informações do CSV
 startupList = []
 with open(sys.argv[1], encoding="utf8") as fh:
@@ -60,9 +58,9 @@ for startup in startupList:
     if 'CNPJ' in startup:
         if (startup['CNPJ'] != "") and (startup['CNPJ'] != "null"):
             newCnpj = re.sub(r'[^\d]', '', startup['CNPJ'])
-            while len(newCnpj) < 14:
-                newCnpj = '0' + newCnpj
+            newCnpj = newCnpj.zfill(14)
             if newCnpj != '00000000000000':
+                newCnpj = "{}.{}.{}/{}-{}".format(newCnpj[:2],newCnpj[2:5],newCnpj[5:8],newCnpj[8:12],newCnpj[12:14])
                 startup['CNPJ'] = newCnpj
             else:
                 startup['CNPJ'] = ""
@@ -136,6 +134,7 @@ for startup in startupList:
             startup['Estado'] = siglas[unidecode(startup['Estado'].lower().replace(" ", ""))]
 
 # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
+    exceptionList = ["Descrição"]
     for key in startup:
         if key not in exceptionList:
             startup[key] = startup[key].replace("\n", ",")
