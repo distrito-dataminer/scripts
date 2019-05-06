@@ -7,7 +7,7 @@ import sys, csv, shutil, datetime
 from googleapiclient.discovery import build
 
 # Conecta na API do Google com a chave de API providenciada
-service = build("customsearch", "v1", developerKey="AIzaSyCitxXqhnfeZdhiw85he62pRu_LGm_0wzU")
+service = build("customsearch", "v1", developerKey="")
 
 file = sys.argv[1]
 noReplace = False

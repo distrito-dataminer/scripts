@@ -133,6 +133,10 @@ for startup in startupList:
         if unidecode(startup['Estado'].lower().replace(" ", "")) in siglas.keys():
             startup['Estado'] = siglas[unidecode(startup['Estado'].lower().replace(" ", ""))]
 
+    if 'Tags' in startup:
+        newTags = startup['Tags'].replace("['", "").replace("']", "").replace("',", ",").replace(", '", ", ")
+        startup['Tags'] = newTags
+
 # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
     exceptionList = ["Descrição"]
     for key in startup:

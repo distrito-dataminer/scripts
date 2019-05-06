@@ -17,7 +17,7 @@ class CsvWriterPipeline(object):
         self.colnames = []
 
     def close_spider(self, spider):
-        csvWriter = csv.DictWriter(self.file, fieldnames = self.colnames)#, delimiter=',')
+        csvWriter = csv.DictWriter(self.file, fieldnames = self.colnames)
         logging.info("HEADER: " + str(self.colnames))
         csvWriter.writeheader()
         for item in self.items:

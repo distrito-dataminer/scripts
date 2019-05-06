@@ -29,37 +29,39 @@ class LinkedinData(scrapy.Spider):
             url = urljoin(self.start_urls[0], profile.split('.com/')[1])
 
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0',
-				'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-				'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-				'Connection': 'keep-alive',
-				'Upgrade-Insecure-Requests': '1',
-				'Pragma': 'no-cache',
-				'Cache-Control': 'no-cache',
-				'TE': 'Trailers',
-            }
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+                    'DNT': '1',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1',
+                    'Pragma': 'no-cache',
+                    'Cache-Control': 'no-cache',
+                    'TE': 'Trailers',
+                }
             
             cookies = {
-                'bcookie': 'v=2&efa04615-f7bd-4354-8059-dfd6ed04652c',
-				'bscookie': 'v=1&20181126132739da50067d-d328-4290-8041-abc247df16e2AQGwX8Q57D6Zj8vKyMBnhxn1_I2JOw2S',
-				'JSESSIONID': 'ajax:1194118783802253131',
-				'visit': 'v=1&M',
-				'_lipt': 'CwEAAAFp_TZEczJ0xoPQTWF77M4Irp-JwrMTMlEByYLaVQQUV5SkTMMHQsGSlZoNC-6pCxZTrrBYwe1mH_tQbe_1F1UZ3ZduJDxe1DAyU8DNQJWYZn-VkGAOwwokUVys5ArzmksQgno935knzkQWshazLPP2wLhE4TVGy9XkLKhRtLMKM7WKmiU8E4vgwAOa7SOnwsgKkQ3nAEv_AjA2L9deewr0jIGKn5faCndoeiAHXC3XN9mdU6cbbW-b9lqiYCxE80-xti3l8xjke7LOGy9e8AtP_fnw6EzO2igPJXozoHN-dCSPEHG9UJQ6wfe61pRr9qquL-19uH9ruxrWjwajfSHqO-A',
-				'org_tcphc': 'true',
-				'AMCV_14215E3D5995C57C0A495C55%40AdobeOrg': '-1303530583%7CMCIDTS%7C17992%7CMCMID%7C91815213977225861640575468564591355059%7CMCOPTOUT-1554479315s%7CNONE%7CvVersion%7C3.3.0',
-				'UserMatchHistory': 'AQJGg3VlydQVcgAAAWn9Qw5r46Vm5lzIel8foGziGOxY0SKtIkY6N3SR-due4sGez7yMtKCbhmLu1nNi6Ta8fhNuoQL0FReNx29-eY0lvGg5aLXL3ZKbV2YbeKRB9ARiOF0ww2LKd1MzxrM',
-				'sl': 'v=1&gvysv',
-				'VID': 'V_2019_03_14_16_1004509',
-				'fid': 'AQHnua7Pafj3RAAAAWnkht1w1lfPEGDuIYGoIVCLZa2MbhY7EREff1wcjlKKH82GU3wPcJAVVqdrww',
-				'li_at': 'AQEDARvom5kAXj0OAAABae3Bg-IAAAFqEc4H4k4AC8VeZn6zMO58qMegcZfPpQSOv9aXYH48WhR84Y7p-uJJYcZR3mZXP0ECqzoC8y_HjQVr10hIt9ZTtdQaxOXT1pN7dqLPBLLy1umBeYfuhxIU8oWX',
-				'liap': 'true',
-				'PLAY_SESSION': '5a5da1cee44d0f9ff25e0ea14fe0fa28d594065e-chsInfo=120c1a81-a476-4bed-97ed-3d89ddbdd742+premium_inmail_profile_upsell',
-				'sdsc': '1%3A1SZM1shxDNbLt36wZwCgPgvN58iw%3D',
-				'AMCVS_14215E3D5995C57C0A495C55%40AdobeOrg': '1',
-				'SID': '68f7d811-0ee9-4d4d-82a4-f86265e15804',
-				'lang': 'v=2&lang=pt-br',
-				'lidc': 'b=TB17:g=2494:u=71:i=1554732220:t=1554818593:s=AQHzGXKNfAx5TUesW_NpYGtYtQpZQuHs',
-            }
+                    'bcookie': 'v=2&efa04615-f7bd-4354-8059-dfd6ed04652c',
+                    'bscookie': 'v=1&20181126132739da50067d-d328-4290-8041-abc247df16e2AQGwX8Q57D6Zj8vKyMBnhxn1_I2JOw2S',
+                    'JSESSIONID': 'ajax:9028902051245035064',
+                    'visit': 'v=1&G',
+                    '_lipt': 'CwEAAAFqftIBN7vh3Ac3bEtTZXhdii-yODWsk7QHtmt9VKuKUn5VG561yhPza-t7aX0L2d-b3z07Lqv8ciDsp5JxqilHQKzjVXnUNeDSt6OcsSUeJYWDD86TsmHW2LeiT4E3avoquQ16bgFzCRNZe1kxMEvbli1Z6glGdpCrzG4Zj1bqYF2w0PRacgM-0WgJANPvDjPsIvGuP3Fs7g4XB9hJ8o-dJwJVcPajtAer12H9DHFM9onxCREkksXeosI34lvif8wsNFE_TozrGK8zRx0bzmpd7YK4TqYX50QX_oK7fAiI04MborcKh_Wm7lCatcdrhRNvU6B98Zt03E59uqjOWDKcEfhiv_2yg69oOliN9nc',
+                    'org_tcphc': 'true',
+                    'AMCV_14215E3D5995C57C0A495C55%40AdobeOrg': '-1303530583%7CMCIDTS%7C18019%7CMCMID%7C91815213977225861640575468564591355059%7CMCOPTOUT-1556924390s%7CNONE%7CvVersion%7C3.3.0',
+                    'UserMatchHistory': 'AQLSsBUpfxHX0gAAAWp_fwNu3TvdVh3vch3dQLzgu6fYmHpKiqyXBKBfsNlnjCzw9vekN_ldEBEoxo8uuaTwmlF5FVkwZwKuScTFaUkmOpdxGMcY3Av6pcgnKHnHoGhX6GzoizM7ORSVLlI',
+                    'VID': 'V_2019_03_14_16_1004509',
+                    'utag_main': 'v_id:016a03d88eb7000f0d6316193d310004e00fe00d00bd0$_sn:2$_se:1$_ss:1$_st:1554846526748$vapi_domain:linkedin.com$ses_id:1554844726748%3Bexp-session$_pn:1%3Bexp-session',
+                    'fid': 'AQFNhFFcFczmzQAAAWp-8h9vBBICARNDF9u6zrFVkEM3z3swMDDtkLYeOu9SOxNWXmD8qSiJY0VDZA',
+                    'sl': 'v=1&X4pb2',
+                    'PLAY_SESSION': '5a5da1cee44d0f9ff25e0ea14fe0fa28d594065e-chsInfo=120c1a81-a476-4bed-97ed-3d89ddbdd742+premium_inmail_profile_upsell',
+                    'sdsc': '1%3A1SZM1shxDNbLt36wZwCgPgvN58iw%3D',
+                    'AMCVS_14215E3D5995C57C0A495C55%40AdobeOrg': '1',
+                    'SID': '68f7d811-0ee9-4d4d-82a4-f86265e15804',
+                    'lidc': 'b=VB17:g=2451:u=96:i=1556907980:t=1556991990:s=AQFFt5NcXJPO2ONylBEBfrg69DKEPn3f',
+                    'li_at': 'AQEDARvom5kBZXlpAAABan7yddEAAAFqov750U0AmIWKnavjPCf5RyrVaUmcYR-dNXzgyz59AE3CksfhbFHDQF7HdVXa_H5WlatQLLbN_FCkgIcleZP7VXqvpjXmCKqSaeBuyS_X2omvK9gyGKznKTiS',
+                    'liap': 'true',
+                    'lang': 'v=2&lang=pt-br',
+                }
 
             raw_text = requests.get(url, headers=headers, cookies=cookies)
 
