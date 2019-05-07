@@ -30,7 +30,7 @@ with open(csvFile, encoding="utf8") as fh:
     fh.close()
 
 # Adiciona as informações coletadas como colunas caso elas já não existam
-scraperKeys = ['Nome', 'Site', 'CNPJ', 'Logo', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response']
+scraperKeys = ['Nome', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response']
 for key in scraperKeys:
     if key not in startupList[0]:
         startupList[0][key] = ""
@@ -96,7 +96,7 @@ def getCnpj(content):
     result = mainScrape + termosScrape + privacidadeScrape
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = "null"
+        result = ""
         print("Nenhum CNPJ encontrado.")
     elif len(result) == 1:
         print("Um CNPJ encontrado: " + result[0])
@@ -112,7 +112,7 @@ def getRegistro(url):
         print("CNPJ pode estar no registro do domínio! Verificar WHOIS.")
         return "VERIFICAR DOMÍNIO!"
     else:
-        return "null"
+        return ""
 
 def getLogo(content):
     logoRegex = re.compile(r"""(https?:\/\/.[^"\s]*?logo.[^"\s]*?\.(png|jpg|svg|tif|jpeg|bmp))""", re.IGNORECASE)
@@ -121,7 +121,7 @@ def getLogo(content):
     for item in matches:
         results.append(item[0])
     if results == []:
-        result = "null"
+        result = ""
         print("Nenhum Logo encontrado.")
     elif len(results) == 1:
         print("Um Logo encontrado: " + results[0])
@@ -141,7 +141,7 @@ def getLinkedin(content):
         result.append("http://" + mo.group().split("?", 1)[0].split("&", 1)[0].replace('/about',"").strip('/').lower()) 
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = "null"
+        result = ""
         print("Nenhum LinkedIn encontrado.")
     elif len(result) == 1:
         print("Um LinkedIn encontrado: " + result[0])
@@ -162,7 +162,7 @@ def getFacebook(content):
             result.append(url)
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = "null"
+        result = ""
         print("Nenhum Facebook encontrado.")
     elif len(result) == 1:
         print("Um Facebook encontrado: " + result[0])
@@ -181,7 +181,7 @@ def getInstagram(content):
         result.append("http://" + mo.group().replace('/about',"").strip('/').lower())
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = "null"
+        result = ""
         print("Nenhum Instagram encontrado.")
     elif len(result) == 1:
         print("Um Instagram encontrado: " + result[0])
@@ -200,7 +200,7 @@ def getTwitter(content):
         result.append("http://" + mo.group().replace('/about',"").strip('/').lower())
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = "null"
+        result = ""
         print("Nenhum Twitter encontrado.")
     elif len(result) == 1:
         print("Um Twitter encontrado: " + result[0])
@@ -219,7 +219,7 @@ def getCrunchbase(content):
         result.append("http://" + mo.group().split("?", 1)[0].split("&", 1)[0].strip('/').lower())
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = "null"
+        result = ""
         print("Nenhum Crunchbase encontrado.")
     elif len(result) == 1:
         print("Um Crunchbase encontrado: " + result[0])
@@ -247,9 +247,8 @@ for startup in startupList:
         continue
     if noReplace == False:
         startup['CNPJ'] = getCnpj(site)
-        if startup['CNPJ'] == "null":
+        if startup['CNPJ'] == "":
             startup['CNPJ'] = getRegistro(startup['Site'])
-#        startup['Logo'] = getLogo(site)
         startup['LinkedIn'] = getLinkedin(site)
         startup['Facebook'] = getFacebook(site)
         startup['Twitter'] = getTwitter(site)
@@ -258,8 +257,6 @@ for startup in startupList:
     elif noReplace == True:
         if ('CNPJ' not in startup) or (startup['CNPJ'] == ''):
             startup['CNPJ'] = getCnpj(site)
-#       if ('Logo' not in startup) or (startup['Logo'] == ''):
-#           startup['Logo'] = getLogo(site)
         if 'LinkedIn' not in startup or startup['LinkedIn'] == '':
             startup['LinkedIn'] = getLinkedin(site)
         if 'Facebook' not in startup or startup['Facebook'] == '':
