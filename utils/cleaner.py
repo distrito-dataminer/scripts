@@ -123,9 +123,9 @@ def clean(startupList):
             startup['Tags'] = newTags
 
     # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
-        exceptionList = ["Descrição"]
-        for key in startup:
-            if key not in exceptionList:
-                startup[key] = startup[key].replace("\n", ",")
+    #    exceptionList = ["Descrição"]
+    #    for key in startup:
+    #        if key not in exceptionList:
+    #            startup[key] = str(startup[key]).replace("\n", ",")
 
     return startupList

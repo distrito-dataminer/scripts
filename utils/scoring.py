@@ -1,6 +1,5 @@
 #! python3
 
-
 def ndp(startupList):
     for startup in startupList:
         score = 0
