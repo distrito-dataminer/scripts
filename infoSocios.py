@@ -53,7 +53,7 @@ errorlist = []
 # Faz uma busca em cada startup e obtém os dados de cada um dos seus sócios
 for startup in startupList:
     if startup['CNPJ']:
-        print("Buscando sócios da " + startup['Nome'] + '...')
+        print("Buscando sócios da " + startup['Startup'] + '...')
         cnpj = startup['CNPJ']
         cnpj = re.sub(r'[^\d]', '', cnpj)
         url = (r'https://service.zipcode.com.br/RestService.svc/ConsultaPJ/json?token=' +
@@ -65,17 +65,17 @@ for startup in startupList:
             print(repr(e))
             continue
         if 'ERRO' in pj:
-            print('API retornou erro ao buscar a ' + startup['Nome'])
+            print('API retornou erro ao buscar a ' + startup['Startup'])
             print('Código: ' + str(pj['ERRO']['CODIGO']))
             print('Mensagem: ' + str(pj['ERRO']['MENSAGEM']))
-            errorlist.append({'CNPJ': startup['CNPJ'], 'Nome': startup['Nome'], 'Erro': str(
+            errorlist.append({'CNPJ': startup['CNPJ'], 'Startup': startup['Startup'], 'Erro': str(
                 pj['ERRO']['MENSAGEM'])})
             continue
         try:
             qsa = pj['QSA_PJ']
         except:
             print("Não foi possível encontrar quadro de sócios da " +
-                  startup['Nome'])
+                  startup['Startup'])
             continue
         for s in qsa:
             socio = createSocio()
@@ -90,7 +90,7 @@ for startup in startupList:
                 socio['CPF'] = cpfFormatado
                 socio['Nome'] = s['NM_COMPLETO']
                 socio['Cargo'] = s['DS_QUALIFICACAO']
-                socio['Empresa'] = startup['Nome']
+                socio['Empresa'] = startup['Startup']
                 socio['CNPJ'] = startup['CNPJ']
                 print('Fazendo consulta aos dados de ' + socio['Nome'] + '...')
                 urlpf = (r'https://service.zipcode.com.br/RestService.svc/ConsultaPF/json?token=' +

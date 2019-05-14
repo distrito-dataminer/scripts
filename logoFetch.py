@@ -16,7 +16,7 @@ errors = []
 nameErrors = []
 
 for startup in startupList:
-    name = startup['Nome']
+    name = startup['Startup']
     for c in r'\/?|:"*<>':
         name = name.replace(c, '')
     logging.debug('Getting logo for %s \n' % name)

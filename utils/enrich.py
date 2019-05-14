@@ -10,7 +10,7 @@ def enrich(startupList, token):
     errorlist = []
     for startup in startupList:
         if startup['CNPJ']:
-            print("Enriquecendo dados de " + startup['Nome'] + '...')
+            print("Enriquecendo dados de " + startup['Startup'] + '...')
             cnpj = startup['CNPJ']
             cnpj = re.sub(r'[^\d]', '', cnpj)
             url = (r'https://service.zipcode.com.br/RestService.svc/ConsultaPJ/json?token=' +
@@ -21,10 +21,10 @@ def enrich(startupList, token):
                 print('Erro ao conectar à API:')
                 print(repr(e))
             if 'ERRO' in data:
-                print('API retornou erro ao buscar a ' + startup['Nome'])
+                print('API retornou erro ao buscar a ' + startup['Startup'])
                 print('Código: ' + str(data['ERRO']['CODIGO']))
                 print('Mensagem: ' + str(data['ERRO']['MENSAGEM']))
-                errorlist.append({'CNPJ': startup['CNPJ'], 'Nome': startup['Nome'], 'Erro': str(
+                errorlist.append({'CNPJ': startup['CNPJ'], 'Startup': startup['Startup'], 'Erro': str(
                     data['ERRO']['MENSAGEM'])})
                 continue
             try:
@@ -34,7 +34,7 @@ def enrich(startupList, token):
                     "De ", "").replace("a", "-")
                 startup['Probabilidade de funcionamento'] = perfil['PROBABILIDADE_FUNCIONAMENTO']
             except Exception as e:
-                print(startup['Nome'] + " deu erro no perfil empresarial.")
+                print(startup['Startup'] + " deu erro no perfil empresarial.")
                 print(repr(e))
             try:
                 emaillist = []
@@ -42,7 +42,7 @@ def enrich(startupList, token):
                     emaillist.append(email['DS_EMAIL'])
                     startup['E-mail'] = emaillist
             except Exception as e:
-                print(startup['Nome'] + " deu erro no e-mail:")
+                print(startup['Startup'] + " deu erro no e-mail:")
                 print(repr(e))
             try:
                 dados = data['DADOS_PRINCIPAIS']
@@ -50,17 +50,17 @@ def enrich(startupList, token):
                 startup['Data de abertura'] = dados['DT_ABERTURA']
                 startup['Porte'] = dados['DS_PORTE']
             except Exception as e:
-                print(startup['Nome'] + " deu erro nos dados principais:")
+                print(startup['Startup'] + " deu erro nos dados principais:")
                 print(repr(e))
             try:
                 startup['Segmento CNPJ'] = data['DADOS_COMPLEMENTARES']['DS_SEGMENTO']
                 startup['Natureza Jurídica'] = data['DADOS_COMPLEMENTARES']['DS_NATUREZAJURIDICA']
             except Exception as e:
-                print(startup['Nome'] + " deu erro nos dados complementares:")
+                print(startup['Startup'] + " deu erro nos dados complementares:")
                 print(repr(e))
             try:
                 startup['Número de sócios'] = len(data['QSA_PJ'])
             except Exception as e:
-                print(startup['Nome'] + " deu erro no número de sócios:")
+                print(startup['Startup'] + " deu erro no número de sócios:")
                 print(repr(e))
     return startupList, errorlist

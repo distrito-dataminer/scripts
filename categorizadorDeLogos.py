@@ -3,14 +3,14 @@
 # categorizadorDeLogos.py - categoriza arquivos em pastas de acordo com categoria e subcategoria
 # Uso: python categorizadorDeLogos.py [csv] [pasta dos logos] [pasta destino]
 # Exemplo: python categorizadorDeLogos.py C:\logos.csv C:\test\ C:\test2\
-# O CSV deve ter colunas chamadas 'Nome', 'Categoria', 'Subcategoria', e 'Site'
+# O CSV deve ter colunas chamadas 'Startup', 'Categoria', 'Subcategoria', e 'Site'
 
 import re, csv, os, shutil, sys, unidecode
 
 # Informa o usuário do uso correto caso os argumentos não sejam passados
 if len(sys.argv) != 4:
     print(r"Uso: python categorizadorLogos.py [csv] [pasta com logos] [pasta destino]")
-    print(r"Exemplo: python categorizadorDeLogos.py C:\logos.csv C:\test\ C:\test2\")
+    print(r"Exemplo: python categorizadorDeLogos.py C:\logos.csv C:\test\ C:\test2\\")
     sys.exit()
 
 # Garante que os paths vão terminar com \    
@@ -47,18 +47,18 @@ for a in startupList:
     found = False
     if not os.path.exists(destpath+a['Categoria']+"\\"+a['Subcategoria']):
         os.makedirs(destpath+a['Categoria']+"\\"+a['Subcategoria'])
-    r = re.compile("^"+unidecode.unidecode(a['Nome'].lower().replace(" ", ""))+"\..*?$")
+    r = re.compile("^"+unidecode.unidecode(a['Startup'].lower().replace(" ", ""))+r"\..*?$")
     for b in logoList:
         mo = r.search(unidecode.unidecode(b.lower().replace(" ", "")))
         if mo == None:
             continue
-        print("Found match for " + a['Nome'] +":      " + b)
+        print("Found match for " + a['Startup'] +":      " + b)
         shutil.copy(path+b, destpath+a['Categoria']+"\\"+a['Subcategoria'])
-        foundList.append(a['Nome'])
+        foundList.append(a['Startup'])
         foundLogos.append(b)
         found = True
     if found == False:
-        print("Match not found for: " + a['Nome'])
+        print("Match not found for: " + a['Startup'])
         notFoundList.append(a)
 
 # Encontra e lista todos os logos que ficaram sem categoria e todas as startups que ficaram sem logo
@@ -68,7 +68,7 @@ for logo in notFoundLogos:
     print(logo)
 print("\n\n\nSTARTUPS THAT HAD NO LOGO:\n")
 for startup in notFoundList:
-    print(startup['Nome'].ljust(30) + startup['Site'])
+    print(startup['Startup'].ljust(30) + startup['Site'])
 
 # Copia os logos que ficaram sem categoria para a pasta base do destino
 if notFoundLogos != []:

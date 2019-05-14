@@ -34,11 +34,11 @@ outputWriter.writeheader()
 for startup in startupList:
     if (noReplace == True) and "LinkedIn" in startup.keys():
         if (startup['LinkedIn'] != ("" or "null")):
-            print("LinkedIn for " + startup['Nome'] + " already present.\n")
+            print("LinkedIn for " + startup['Startup'] + " already present.\n")
             startup['Revisar LinkedIn'] = "NÃO"
             outputWriter.writerow(startup)
             continue
-    print("Getting LinkedIn for " + startup['Nome'] + "...")
+    print("Getting LinkedIn for " + startup['Startup'] + "...")
     res = service.cse().list(
       q=startup['Site'],
       cx='002626537913979718585:pkjl9_mtdpm',

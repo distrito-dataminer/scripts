@@ -3,7 +3,7 @@
 def ndp(startupList):
     for startup in startupList:
         score = 0
-        if startup['Nome'] and startup['Site'] and startup['Fonte']:
+        if startup['Startup'] and startup['Site'] and startup['Fonte']:
             score += 5
         if startup['CNPJ']:
             score += 5
