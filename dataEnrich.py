@@ -41,7 +41,7 @@ outputFile.close()
 # Cria um CSV com as startups que deram erro, caso existam
 if len(errorlist) > 0:
     all_error_keys = []
-    for item in errorlist:
+    for item in errorlist:   
         if key in item:
             if key not in all_error_keys:
                 all_error_keys.append(key)
