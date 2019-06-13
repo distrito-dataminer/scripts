@@ -8,11 +8,13 @@
 
 import csv
 import logging
+from datetime import datetime
 
 class CsvWriterPipeline(object):
 
     def open_spider(self, spider):
-        self.file = open('output.csv', 'w', newline='', encoding='utf8')
+        now = datetime.now().replace(microsecond = 0)
+        self.file = open(r"C:\test\LKDbotOutput {}.csv".format(now.strftime('%Y-%m-%d %H.%M')), 'w', newline='', encoding='utf8')
         self.items = []
         self.colnames = []
 

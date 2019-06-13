@@ -1,26 +1,15 @@
 #! python3
 # lkdMerge.py - Depois de rodar o bot de LinkedIn, anexa as informações de volta à planilha original
-import csv, re, sys, os, shutil
+import csv, re, sys, os, shutil, ast
+from utils import cleaner, ddmdata, enrich, privatekeys, sanity
+from more_itertools import unique_everseen as unique
 
 startupcsv = sys.argv[1]
 lkdcsv = sys.argv[2]
 
-startupList = []
-lkdList = []
-
-with open(startupcsv, encoding="utf8") as fh:
-    rd = csv.DictReader(fh, delimiter=',')
-    for row in rd:
-        startupList.append(row)
-    fh.close()
-
-with open(lkdcsv, encoding="utf8") as fh:
-    rd = csv.DictReader(fh, delimiter=',')
-    for row in rd:
-        lkdList.append(row)
-    fh.close()
-
-keys = []
+startupList = ddmdata.readcsv(startupcsv)
+lkdList = ddmdata.readcsv(lkdcsv)
+addresslist = []
 
 for startup in startupList:
     for lkd in lkdList:
@@ -30,7 +19,8 @@ for startup in startupList:
             if lkd['follower_count'] != '':
                 startup['Seguidores LKD'] = lkd['follower_count']
             if lkd['description'] != '':
-                startup['Descrição'] = lkd['description']
+                if lkd['description'] not in startup['Descrição']:
+                    startup['Descrição'] += '\n\n' + lkd['description']
             if lkd['name'] != '':
                 startup['Nome LKD'] = lkd['name']
             if lkd['company_size'] != '':
@@ -48,12 +38,26 @@ for startup in startupList:
             if lkd['number_of_self_declared_employees'] != '':
                 startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']
             if lkd['tags'] != '':
-                startup['Tags'] = lkd['tags']
-    for key in startup:
-        if key not in keys:
-            keys.append(key)   
+                lkdtags = ast.literal_eval(lkd['tags'])
+                oldtags = startup['Tags'].split(',')
+                newtags = unique(lkdtags + oldtags)
+                startup['Tags'] = ','.join(newtags)
+            if lkd['confirmed_locations']:
+                locations = ast.literal_eval(lkd['confirmed_locations'])
+                if 'line1' in locations[0]:
+                    keysArray = ['line1', 'line2', 'city', 'geographicArea', 'postalCode']
+                    addlines = [locations[0][x] for x in keysArray if x in locations[0]]
+                    address = ''
+                    for i in range(len(addlines)):
+                        address += ', ' + addlines[i]
+                    address = address.strip().strip(',').strip()
+                    startup['Endereço'] = address
+                for location in locations:
+                    if ('line1' or 'line2') in location:
+                        newLoc = enrich.lkdAdd(location, startup)
+                        addresslist.append(newLoc)
 
-outputFile = open('mergedOutput.csv', 'w', newline='', encoding = "utf8")
-outputWriter = csv.DictWriter(outputFile, keys, delimiter=',')
-outputWriter.writeheader()
-outputWriter.writerows(startupList)
+startupList = cleaner.clean(cleaner.clean((startupList)))
+
+ddmdata.writecsv(startupList, '{}_lkd_merged.csv'.format(startupcsv.replace('.csv', '')))
+ddmdata.writecsv(addresslist, '{}_lkd_addresses.csv'.format(startupcsv.replace('.csv', '')))

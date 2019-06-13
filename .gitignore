@@ -133,3 +133,5 @@ dmypy.json
 devkey.txt
 utils/token.txt
 .vscode/settings.json
+utils/privatekeys.py
+temp2.py

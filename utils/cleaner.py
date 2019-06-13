@@ -5,6 +5,7 @@ import sys
 import csv
 import re
 import pprint
+from datetime import datetime, timedelta
 from more_itertools import unique_everseen as unique
 from utils import validate
 from collections import OrderedDict
@@ -72,7 +73,7 @@ def clean(startupList):
                 if "http://" not in newSite:
                     newSite = "http://" + newSite
                 newSite = newSite.replace("www.", "")
-                siteRegex = re.compile(r"http:\/\/[\w|.]*", re.IGNORECASE)
+                siteRegex = re.compile(r'http:\/\/[^\/&?"]*', re.IGNORECASE)
                 mo = siteRegex.search(newSite)
                 if mo != None:
                     newSite = mo.group().lower().strip()
@@ -85,7 +86,7 @@ def clean(startupList):
                 newLkdList = []
                 for lkd in lkdList:
                     lkdRegex = re.compile(
-                        r"linkedin\.com\/company\/\w*", re.IGNORECASE)
+                        r'linkedin\.com\/company\/[^\/?"]*', re.IGNORECASE)
                     mo = lkdRegex.search(lkd)
                     if mo != None:
                         lkd = "http://" + mo.group().lower().strip()
@@ -103,7 +104,7 @@ def clean(startupList):
                 newFbList = []
                 for fb in fbList:
                     fbRegex = re.compile(
-                        r"facebook\.com\/(pg\/|page\/|pages\/)?\w*", re.IGNORECASE)
+                        r'facebook\.com\/(pg\/|page\/|pages\/)?[^\/&?"]*', re.IGNORECASE)
                     mo = fbRegex.search(fb)
                     if mo != None:
                         fb = "http://" + mo.group().lower().strip()
@@ -119,7 +120,7 @@ def clean(startupList):
                 newTtList =[]
                 for tt in ttList:
                     ttRegex = re.compile(
-                        r"twitter\.com\/\w*", re.IGNORECASE)
+                        r'twitter\.com\/[^\/&?"]*', re.IGNORECASE)
                     mo = ttRegex.search(tt)
                     if mo != None:
                         tt = "http://" + mo.group().lower().strip()
@@ -138,7 +139,7 @@ def clean(startupList):
                 newInstaList = []
                 for insta in instaList:
                     instaRegex = re.compile(
-                        r"instagram\.com\/\w*", re.IGNORECASE)
+                        r'instagram\.com\/[^\/&?"]*', re.IGNORECASE)
                     mo = instaRegex.search(insta)
                     if mo != None:
                         insta = "http://" + mo.group().lower().strip()
@@ -154,7 +155,7 @@ def clean(startupList):
                 newCbList = []
                 for cb in cbList:
                     cbRegex = re.compile(
-                        r"crunchbase\.com\/organization\/\w*", re.IGNORECASE)
+                        r'crunchbase\.com\/organization\/[^\/&?"]*', re.IGNORECASE)
                     mo = cbRegex.search(cb)
                     if mo != None:
                         cb = "http://" + mo.group().lower().strip()
@@ -183,6 +184,18 @@ def clean(startupList):
                     tag = tag.strip().replace("['", '').replace("']", '')
                     newTagList.append(tag)
                 startup['Tags'] = ','.join(list(unique(newTagList)))
+        
+        if 'Data de abertura' in startup:
+            if startup['Data de abertura']:
+                if '/Date(' in startup['Data de abertura']:
+                    jsondate = startup['Data de abertura'][6:-7]
+                    jsondate = int(jsondate)
+                    jsondate = jsondate // 1000
+                    if jsondate < 0:
+                        mydate = datetime(1970, 1, 1) + timedelta(seconds=jsondate)
+                    else: 
+                        mydate = datetime.fromtimestamp(jsondate)
+                    startup['Data de abertura'] = mydate.strftime('%Y-%m-%d')
 
     # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
         exceptionList = ['Descrição']
@@ -190,8 +203,9 @@ def clean(startupList):
             if key not in exceptionList:
                 startup[key] = str(startup[key]).replace("\n", ",")
 
-    print("CNPJs inválidos detectados - IDs e nomes:")
-    print(*invalidCnpjs, sep='\n')
+    if len(invalidCnpjs) > 0:
+        print("CNPJs inválidos detectados - IDs e nomes:")
+        print(*invalidCnpjs, sep='\n')
     return startupList
 
 def score(startupList):

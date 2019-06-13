@@ -9,7 +9,7 @@ from more_itertools import unique_everseen as unique
 from unidecode import unidecode
 from jellyfish import levenshtein_distance as lev 
 
-import ddmdata, cleaner
+from utils import ddmdata, cleaner
 
 def sectlist(csvPath):
     l = ddmdata.readcsv(csvPath)
@@ -40,19 +40,15 @@ def catcheck(startupList, sectorList):
 def dupeDetect(startupList):
     matchList = []
     for startup in startupList:
-        site = startup['Site']
-        if site == '':
+        if startup['Site'] == '':
             continue
-        siteMatch = re.search(r'http:\/\/[^\.]*', site)
         for startup2 in startupList:
             if startup['ID'] == startup2['ID']:
                 continue
-            site2 = startup2['Site']
-            if site2 == '':
+            if startup2['Site'] == '':
                 continue
-            site2Match = re.search(r'http:\/\/[^\.]*', site2)
-            if siteMatch == site2Match:
-                matchList.append((site, site2)) 
+            if startup['Site'] == startup2['Site']:
+                matchList.append((startup['Site'], startup2['Site'])) 
     return matchList
 
 def cemiterioCheck(startupList, cemiterio):
@@ -60,11 +56,9 @@ def cemiterioCheck(startupList, cemiterio):
         site = startup['Site']
         if site == '':
             continue
-        siteMatch = re.search(r'http:\/\/[^\.]*', site)
         for morta in cemiterio:
             sitemorta = morta['Site']
             if sitemorta == '':
                 continue
-            sitemortaMatch = re.search(r'http:\/\/[^\.]*', sitemorta)
-            if siteMatch == sitemortaMatch:
+            if site == sitemorta:
                 print('{} está na base de startups e também no cemitério.'.format(startup['Startup']))

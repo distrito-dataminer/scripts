@@ -1,11 +1,12 @@
 #! python3
 # siteScraper.py - encontra informações relevantes de startups em sites contidos em um csv
 # Informações coletadas: CNPJ, LinkedIn, Facebook, Instagram, Twitter, Crunchbase
-# O csv deve conter pelo menos as colunas 'Nome' e 'Site'.
+# O csv deve conter pelo menos as colunas 'Startup' e 'Site'.
 # Uso: python cnpjScraper.py [csv] [opcional: noreplace]
 
 import sys, csv, webbrowser, bs4, requests, re, shutil, datetime
 from collections import OrderedDict
+from utils import cleaner, ddmdata, sanity
 
 # Desativa a exigência de certificado HTTPS ao pegar as informações
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -18,19 +19,18 @@ if len(sys.argv) > 2:
     if sys.argv[2] == "noreplace":
         noReplace = True
 
-min = sys.argv[3]
-max = sys.argv[4]
+min = 0
+max = 999999
+
+if len(sys.argv) > 3:
+    min = sys.argv[3]
+    max = sys.argv[4]
 
 # Popula um dicionário com as informações do CSV
-startupList = []
-with open(csvFile, encoding="utf8") as fh:
-    rd = csv.DictReader(fh, delimiter=',')
-    for row in rd:
-        startupList.append(row)
-    fh.close()
+startupList = ddmdata.readcsv(sys.argv[1])
 
 # Adiciona as informações coletadas como colunas caso elas já não existam
-scraperKeys = ['Nome', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response']
+scraperKeys = ['Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response']
 for key in scraperKeys:
     if key not in startupList[0]:
         startupList[0][key] = ""
@@ -42,13 +42,33 @@ outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
 outputWriter.writeheader()
 
 # Requisita o site da startup e faz download dele usando o Requests
+# TODO: Usar o Requests para simular uma sessão e Useragent do Firefox e obter resultados mais confiáveis
 def getSite(site):
     if ("http" and "://") not in site:
         site = "http://" + site
     try:
-        res = requests.get(site, verify=False, timeout=15)
+        res = requests.get(site, verify=False, timeout=(2, 15))
     except Exception as e:
-        return 'ERRO', e
+        try:
+            print('Erro. Adicionando WWW.')
+            site = site.replace('http://', 'http://www.')
+            res = requests.get(site, verify=False, timeout=(2, 15))
+        except:
+            print('Erro mesmo com WWW. Enviando erro original.')
+            return 'ERRO', repr(e)
+    if res.status_code != 200:
+        try:
+            if 'http://www.' not in site:
+                print('Status code ruim. Adicionando WWW.')
+                site = site.replace('http://', 'http://www.')
+                res2 = requests.get(site, verify=False, timeout=(2, 15))
+                if res2.status_code == 200:
+                    soup = bs4.BeautifulSoup(res2.text, features="lxml")
+                    return soup, res2.status_code
+                else:
+                    print('Adicionar o WWW não resolveu. Prosseguindo com status code original.')
+        except:
+            print('Erro ao adicionar WWW. Prosseguindo com status code ruim.')
     soup = bs4.BeautifulSoup(res.text, features="lxml")
     return soup, res.status_code
 
@@ -110,7 +130,7 @@ def getRegistro(url):
     url = url.strip('/').replace('http://', '')
     if url[-3:] == ".br":
         print("CNPJ pode estar no registro do domínio! Verificar WHOIS.")
-        return "VERIFICAR DOMÍNIO!"
+        return ""
     else:
         return ""
 
@@ -236,7 +256,12 @@ for startup in startupList:
     if int(startup['ID']) > int(max):
         outputWriter.writerow(startup)
         continue
-    print("(" + str(startupList.index(startup) + 1) + "/" + str(len(startupList)) + ")" + "\nRequisitando site da " + startup['Nome'] + "...")
+    # Comente esse trecho para reobter dados de startups que já tem o campo Response preenchido
+    if startup['Response'] != '':
+        outputWriter.writerow(startup)
+        print('\n{} já tem Response. Pulando para o próximo site... \n'.format(startup['Startup']))
+        continue
+    print("(" + str(startupList.index(startup) + 1) + "/" + str(len(startupList)) + ")" + "\nRequisitando site da " + startup['Startup'] + "...")
     print("URL: " + startup['Site'])
     site, response = getSite(startup['Site'])
     startup['Response'] = response
