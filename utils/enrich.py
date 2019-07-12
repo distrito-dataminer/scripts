@@ -183,10 +183,9 @@ def geocode(enderecoList):
             if endereco['Logradouro']:
                 print('Obtendo geocode de endereço da ' + endereco['Startup'])
                 g = geocoder.google(location=(endereco['Logradouro'] + ',' + endereco['Cidade'] +
-                                              ',' + endereco['Estado'] + ',' + endereco['CEP'] + ',' + 'Brasil'), key=devkey, timeout=10, rate_limite = False)
+                                              ',' + endereco['Estado'] + ',' + endereco['CEP'] + ',' + 'Brasil'), key=devkey, timeout=10, rate_limit = False)
                 endereco['Latitude'] = g.json['lat']
                 endereco['Longitude'] = g.json['lng']
-                sleep(1)
         except Exception as e:
             print('Erro: ' + repr(e))
     return enderecoList
