@@ -24,6 +24,17 @@ def writecsv(startupList, csvpath='output.csv'):
     outputWriter.writeheader()
     outputWriter.writerows(startupList)
 
+def dictFromCsv(csvpath):
+    reader = csv.reader(open(csvpath, 'r', encoding = 'utf8'))
+    d = dict(reader)
+    return d
+
+def iDictFromCsv(csvpath):
+    reader = csv.reader(open(csvpath, 'r', encoding = 'utf8'))
+    d = dict(reader)
+    inverted_d = dict(map(reversed, d.items()))
+    return inverted_d
+
 def datacomplete(masterSL, slaveSL):
     for master in masterSL:
         for slave in slaveSL:

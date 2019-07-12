@@ -10,36 +10,7 @@ from more_itertools import unique_everseen as unique
 from utils import validate
 from collections import OrderedDict
 from unidecode import unidecode
-
-siglas = {
-    "acre": "AC",
-    "alagoas": "AL",
-    "amapa": "AP",
-    "amazonas": "AM",
-    "bahia": "BA",
-    "ceara": "CE",
-    "distritofederal": "DF",
-    "espiritosanto": "ES",
-    "goias": "GO",
-    "maranhao": "MA",
-    "matogrosso": "MT",
-    "matogrossodosul": "MS",
-    "minasgerais": "MG",
-    "para": "PA",
-    "paraiba": "PB",
-    "parana": "PR",
-    "pernambuco": "PE",
-    "piaui": "PI",
-    "riodejaneiro": "RJ",
-    "riograndedonorte": "RN",
-    "riograndedosul": "RS",
-    "rondonia": "RO",
-    "roraima": "RR",
-    "santacatarina": "SC",
-    "saopaulo": "SP",
-    "sergipe": "SE",
-    "tocantins": "TO"
-}
+from utils import datasets
 
 
 def clean(startupList):
@@ -52,17 +23,24 @@ def clean(startupList):
         if 'CNPJ' in startup:
             if startup['CNPJ']:
                 cnpjList = startup['CNPJ'].strip().split(',')
+                while '' in cnpjList:
+                    cnpjList.remove('')
                 newCnpjList = []
                 for cnpj in cnpjList:
                     newCnpj = re.sub(r'[^\d]', '', cnpj)
                     newCnpj = newCnpj.zfill(14)
+                    if newCnpj == '00000000000000':
+                        continue
                     if validate.isCnpjValid(newCnpj):
                         newCnpj = "{}.{}.{}/{}-{}".format(
                             newCnpj[:2], newCnpj[2:5], newCnpj[5:8], newCnpj[8:12], newCnpj[12:14])
                         newCnpjList.append(newCnpj)
                     else:
-                        invalidCnpjs.append(startup['ID'] + ' - ' + startup['Startup'])
+                        invalidCnpjs.append(
+                            startup['Startup'])
                         newCnpjList.append(cnpj)
+                while '' in newCnpjList:
+                    newCnpjList.remove('')
                 startup['CNPJ'] = ','.join(list(unique(newCnpjList)))
 
     # Limpa o site, mantendo formato consistente e letras minúsculas
@@ -76,8 +54,12 @@ def clean(startupList):
                 siteRegex = re.compile(r'http:\/\/[^\/&?"]*', re.IGNORECASE)
                 mo = siteRegex.search(newSite)
                 if mo != None:
-                    newSite = mo.group().lower().strip()
-                startup['Site'] = newSite.strip().strip('/').lower()
+                    newSite = mo.group().lower().strip().strip('/').strip()
+                if newSite in datasets.invalidsites:
+                    print('{} tem site inválido: {}. Removendo.'.format(startup['Startup'], startup['Site']))
+                    startup['Site'] = ''
+                else:
+                    startup['Site'] = newSite
 
     # Limpa o URL do LinkedIn
         if 'LinkedIn' in startup:
@@ -117,7 +99,7 @@ def clean(startupList):
         if 'Twitter' in startup:
             if startup['Twitter']:
                 ttList = startup['Twitter'].strip().split(',')
-                newTtList =[]
+                newTtList = []
                 for tt in ttList:
                     ttRegex = re.compile(
                         r'twitter\.com\/[^\/&?"]*', re.IGNORECASE)
@@ -170,11 +152,38 @@ def clean(startupList):
                 estadoList = startup['Estado'].strip().split(',')
                 newEstadoList = []
                 for estado in estadoList:
-                    if unidecode(estado.lower().replace(" ", "")) in siglas.keys():
-                        estado = siglas[unidecode(estado.lower().replace(" ", ""))]
+                    if re.sub(r'[^\w]|\s', '', unidecode(estado.lower())) in datasets.siglas.keys() and estado not in datasets.siglas.values():
+                        oldestado = estado
+                        estado = datasets.siglas[re.sub(
+                            r'[^\w]|\s', '', unidecode(estado.lower()))]
+                        print('Alterando estado de {} para {}'.format(
+                            oldestado, estado))
                     newEstadoList.append(estado)
-                estadoList = list(unique(estadoList))
+                newEstadoList = list(unique(newEstadoList))
+                while '' in newEstadoList:
+                    newEstadoList.remove('')
                 startup['Estado'] = ','.join(list(unique(newEstadoList)))
+
+        if 'Cidade' in startup:
+            if startup['Cidade']:
+                cidadeList = startup['Cidade'].strip().split(',')
+                newCidadeList = []
+                for cidade in cidadeList:
+                    if (cidade.upper().replace(' ', '') in datasets.siglas.values()) and (len(cidadeList) > 1):
+                        print(
+                            '{} é um estado e está como cidade. Removendo!'.format(cidade))
+                        continue
+                    if re.sub(r'[^\w]|\s', '', unidecode(cidade.lower())) in datasets.cidades.keys() and cidade not in datasets.cidades.values():
+                        oldcidade = cidade
+                        cidade = datasets.cidades[re.sub(
+                            r'[^\w]|\s', '', unidecode(cidade.lower()))]
+                        print('Alterando cidade de {} para {}'.format(
+                            oldcidade, cidade))
+                    newCidadeList.append(cidade)
+                newCidadeList = list(unique(newCidadeList))
+                while '' in newCidadeList:
+                    newCidadeList.remove('')
+                startup['Cidade'] = ','.join(list(unique(newCidadeList)))
 
         if 'Tags' in startup:
             if startup['Tags']:
@@ -183,8 +192,10 @@ def clean(startupList):
                 for tag in tagList:
                     tag = tag.strip().replace("['", '').replace("']", '')
                     newTagList.append(tag)
+                while '' in newTagList:
+                    newTagList.remove('')
                 startup['Tags'] = ','.join(list(unique(newTagList)))
-        
+
         if 'Data de abertura' in startup:
             if startup['Data de abertura']:
                 if '/Date(' in startup['Data de abertura']:
@@ -192,8 +203,9 @@ def clean(startupList):
                     jsondate = int(jsondate)
                     jsondate = jsondate // 1000
                     if jsondate < 0:
-                        mydate = datetime(1970, 1, 1) + timedelta(seconds=jsondate)
-                    else: 
+                        mydate = datetime(1970, 1, 1) + \
+                            timedelta(seconds=jsondate)
+                    else:
                         mydate = datetime.fromtimestamp(jsondate)
                     startup['Data de abertura'] = mydate.strftime('%Y-%m-%d')
 
@@ -207,6 +219,7 @@ def clean(startupList):
         print("CNPJs inválidos detectados - IDs e nomes:")
         print(*invalidCnpjs, sep='\n')
     return startupList
+
 
 def score(startupList):
     for startup in startupList:
@@ -275,3 +288,19 @@ def score(startupList):
             score += 5
         startup['NDP'] = round((score / 80) * 100)
     return startupList
+
+
+def cleanEndereco(enderecolist):
+
+    for index, endereco in enumerate(enderecolist):
+        for index2, endereco2 in enumerate(enderecolist):
+            if index == index2:
+                continue
+            if (endereco['Startup'], endereco['CEP']) == (endereco2['Startup'], endereco2['CEP']):
+                enderecolist.remove(endereco2)
+
+    for endereco in enderecolist:
+        if len(endereco['CEP']) == 8:
+            endereco['CEP'] = endereco['CEP'][0:5] + '-' + endereco['CEP'][5:]
+
+    return enderecolist

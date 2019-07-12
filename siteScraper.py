@@ -41,13 +41,23 @@ outputFile = open('output.csv', 'w', newline='', encoding = "utf8")
 outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
 outputWriter.writeheader()
 
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'If-Modified-Since': 'Mon, 08 Jul 2019 18:10:47 GMT',
+    'If-None-Match': '5f879487d25a59f2e5f968f7b6bd5799',
+    'Cache-Control': 'max-age=0',
+}
+
 # Requisita o site da startup e faz download dele usando o Requests
-# TODO: Usar o Requests para simular uma sessão e Useragent do Firefox e obter resultados mais confiáveis
 def getSite(site):
     if ("http" and "://") not in site:
         site = "http://" + site
     try:
-        res = requests.get(site, verify=False, timeout=(2, 15))
+        res = requests.get(site, verify=False, timeout=(2, 15), headers=headers)
     except Exception as e:
         try:
             print('Erro. Adicionando WWW.')

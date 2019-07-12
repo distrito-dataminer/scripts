@@ -8,27 +8,17 @@ import requests
 import pprint
 from collections import OrderedDict
 from unidecode import unidecode
-from utils import cleaner, enrich, scoring
-
-# Obtém o token de um arquivo de texto
-token = open(r'.\utils\token.txt', 'r').read()
+from utils import cleaner, enrich, ddmdata
+from utils import privatekeys
 
 # Define o dicionário de sócio e cria lista de sócios
 socios = []
 
 # Popula um dicionário com as informações do CSV
-startupList = []
-with open(sys.argv[1], encoding="utf8") as fh:
-    rd = csv.DictReader(fh, delimiter=',')
-    for row in rd:
-        startupList.append(row)
-    fh.close()
+startupList = ddmdata.readcsv(sys.argv[1])
 
 # Limpa os dados da lista de startups antes de trabalhar com eles
 startupList = cleaner.clean(startupList)
-
-# Define o formato do dicionário de sócio, com campos ordenados
-
 
 def createSocio():
     socio = OrderedDict()
@@ -57,7 +47,7 @@ for startup in startupList:
         cnpj = startup['CNPJ']
         cnpj = re.sub(r'[^\d]', '', cnpj)
         url = (r'https://service.zipcode.com.br/RestService.svc/ConsultaPJ/json?token=' +
-               token + r'&cnpj=' + cnpj)
+               privatekeys.tokenTU + r'&cnpj=' + cnpj)
         try:
             pj = requests.get(url, timeout=10).json()
         except Exception as e:
@@ -94,7 +84,7 @@ for startup in startupList:
                 socio['CNPJ'] = startup['CNPJ']
                 print('Fazendo consulta aos dados de ' + socio['Nome'] + '...')
                 urlpf = (r'https://service.zipcode.com.br/RestService.svc/ConsultaPF/json?token=' +
-                         token + r'&cpf=' + cpf)
+                         privatekeys.tokenTU + r'&cpf=' + cpf)
                 try:
                     pf = requests.get(urlpf, timeout=10).json()
                 except Exception as e:

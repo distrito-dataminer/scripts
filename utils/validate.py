@@ -53,7 +53,7 @@ def isCpfValid(cpf):
 
 
 def isCnpjValid(cnpj):
-    """ If cnpf in the Brazilian format is valid, it returns True, otherwise, it returns False. """
+    """ If cnpj in the Brazilian format is valid, it returns True, otherwise, it returns False. """
 
     # Check if type is str
     if not isinstance(cnpj,str):

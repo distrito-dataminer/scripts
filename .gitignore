@@ -135,3 +135,5 @@ utils/token.txt
 .vscode/settings.json
 utils/privatekeys.py
 temp2.py
+.vscode/launch.json
+temp.py

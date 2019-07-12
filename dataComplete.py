@@ -6,24 +6,15 @@
 import sys, csv, re
 from collections import OrderedDict
 from unidecode import unidecode
-from utils import cleaner
+from utils import cleaner, ddmdata
 
 # Popula um dicionário com as informações do CSV mestre
-masterSL = []
-with open(sys.argv[1], encoding="utf8") as fh:
-    rd = csv.DictReader(fh, delimiter=',')
-    for row in rd:
-        masterSL.append(row)
-    fh.close()
+masterSL = ddmdata.readcsv(sys.argv[1])
 
 # Popula um dicionário com as informações do CSV slave
-slaveSL = []
-with open(sys.argv[2], encoding="utf8") as fh:
-    rd = csv.DictReader(fh, delimiter=',')
-    for row in rd:
-        slaveSL.append(row)
-    fh.close()
+slaveSL = ddmdata.readcsv(sys.argv[2])
 
+# Limpa os dados de ambas as listas
 masterSL = cleaner.clean(masterSL)
 slaveSL = cleaner.clean(slaveSL)
 

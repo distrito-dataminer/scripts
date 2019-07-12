@@ -32,24 +32,31 @@ def catcheck(startupList, sectorList):
             for item in zipped:
                 if item not in sectorList:
                     problems.append(item)
-    with open('problems.txt', 'w') as problemfile:
-        for item in list(unique(problems)):
-            problemfile.write(str(item)+'\n')
-    problemfile.close()
+    if len(problems) > 0:
+        with open('problems.txt', 'w') as problemfile:
+            for item in list(unique(problems)):
+                problemfile.write(str(item)+'\n')
+        problemfile.close()
 
 def dupeDetect(startupList):
-    matchList = []
+    dupeList = []
     for startup in startupList:
+        startup['Checked'] = True
         if startup['Site'] == '':
             continue
         for startup2 in startupList:
+            if 'Checked' in startup2:
+                continue
             if startup['ID'] == startup2['ID']:
                 continue
             if startup2['Site'] == '':
                 continue
             if startup['Site'] == startup2['Site']:
-                matchList.append((startup['Site'], startup2['Site'])) 
-    return matchList
+                dupeList.append(startup2)
+                #matchList.append((startup['Site'], startup2['Site'])) 
+    for dupe in dupeList:
+        del dupe[-1]
+    return dupeList
 
 def cemiterioCheck(startupList, cemiterio):
     for startup in startupList:

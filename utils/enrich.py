@@ -12,7 +12,6 @@ from time import sleep
 devkey = privatekeys.devkey
 token = privatekeys.tokenTU
 
-
 def createadd(endereco, startup):
     address = OrderedDict([('Startup ID', ''), ('Startup', ''), ('CNPJ', ''), ('CEP', ''),
                            ('Estado', ''), ('Cidade', ''), ('Bairro', '',),
@@ -70,7 +69,7 @@ def enrich(startupList):
     addressList = []
     for startup in startupList:
         try:
-            if startup['CNPJ'] != '':
+            if startup['CNPJ'] != '' and startup['Razão Social'] == '':
                 print("Enriquecendo dados de " + startup['Startup'] + '...')
                 cnpj = startup['CNPJ']
                 cnpj = re.sub(r'[^\d]', '', cnpj)
@@ -189,3 +188,23 @@ def geocode(enderecoList):
         except Exception as e:
             print('Erro: ' + repr(e))
     return enderecoList
+
+def geocodeind(endereco):
+    try:
+        if 'Latitude' and 'Longitude' in endereco:
+            if endereco['Latitude'] and endereco['Longitude']:
+                print('Endereço da {} já tinha geocode.'.format(endereco['Startup']))
+                return endereco
+        if endereco['Logradouro']:
+            print('Obtendo geocode de endereço da ' + endereco['Startup'])
+            g = geocoder.google(location=(endereco['Logradouro'] + ',' + endereco['Cidade'] +
+                                            ',' + endereco['Estado'] + ',' + endereco['CEP'] + ',' + 'Brasil'), key=devkey, timeout=10, rate_limit = False)
+            endereco['Latitude'] = g.json['lat']
+            endereco['Longitude'] = g.json['lng']
+            print((endereco['Latitude'],endereco['Longitude']))
+            sleep(1)
+            return endereco
+    except Exception as e:
+        print('Erro: ' + repr(e))
+        return endereco
+    return endereco

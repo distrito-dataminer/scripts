@@ -6,6 +6,7 @@
 # O CSV deve ter colunas chamadas 'Startup', 'Categoria', 'Subcategoria', e 'Site'
 
 import re, csv, os, shutil, sys, unidecode
+from utils import ddmdata
 
 # Informa o usuário do uso correto caso os argumentos não sejam passados
 if len(sys.argv) != 4:
@@ -55,6 +56,7 @@ for a in startupList:
         print("Found match for " + a['Startup'] +":      " + b)
         shutil.copy(path+b, destpath+a['Categoria']+"\\"+a['Subcategoria'])
         foundList.append(a['Startup'])
+        a['Logo'] = 'TRUE'
         foundLogos.append(b)
         found = True
     if found == False:
@@ -69,6 +71,8 @@ for logo in notFoundLogos:
 print("\n\n\nSTARTUPS THAT HAD NO LOGO:\n")
 for startup in notFoundList:
     print(startup['Startup'].ljust(30) + startup['Site'])
+
+ddmdata.writecsv(startupList, 'logoupdate.csv')
 
 # Copia os logos que ficaram sem categoria para a pasta base do destino
 if notFoundLogos != []:
