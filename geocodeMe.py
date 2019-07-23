@@ -1,7 +1,8 @@
+import sys
 from utils import ddmdata, cleaner, enrich
 from func_timeout import func_timeout, FunctionTimedOut
 
-ends = ddmdata.readcsv('ends_clean.csv')
+ends = ddmdata.readcsv(sys.argv[1])
 timeouts = 0
 count = 0
 

@@ -292,15 +292,15 @@ def score(startupList):
 
 def cleanEndereco(enderecolist):
 
+    for endereco in enderecolist:
+        if len(endereco['CEP']) == 8:
+            endereco['CEP'] = endereco['CEP'][0:5] + '-' + endereco['CEP'][5:]
+
     for index, endereco in enumerate(enderecolist):
         for index2, endereco2 in enumerate(enderecolist):
             if index == index2:
                 continue
             if (endereco['Startup'], endereco['CEP']) == (endereco2['Startup'], endereco2['CEP']):
                 enderecolist.remove(endereco2)
-
-    for endereco in enderecolist:
-        if len(endereco['CEP']) == 8:
-            endereco['CEP'] = endereco['CEP'][0:5] + '-' + endereco['CEP'][5:]
 
     return enderecolist

@@ -19,8 +19,11 @@ for startup in startupList:
             if lkd['follower_count'] != '':
                 startup['Seguidores LKD'] = lkd['follower_count']
             if lkd['description'] != '':
-                if lkd['description'] not in startup['Descrição']:
-                    startup['Descrição'] += '\n\n' + lkd['description']
+                if 'Descrição' in startup:
+                    if lkd['description'] not in startup['Descrição']:
+                        startup['Descrição'] += '\n\n' + lkd['description']
+                else:
+                    startup['Descrição'] = lkd['description']
             if lkd['name'] != '':
                 startup['Nome LKD'] = lkd['name']
             if lkd['company_size'] != '':
@@ -39,9 +42,12 @@ for startup in startupList:
                 startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']
             if lkd['tags'] != '':
                 lkdtags = ast.literal_eval(lkd['tags'])
-                oldtags = startup['Tags'].split(',')
-                newtags = unique(lkdtags + oldtags)
-                startup['Tags'] = ','.join(newtags)
+                if 'Tags' in startup:
+                    oldtags = startup['Tags'].split(',')
+                    newtags = unique(lkdtags + oldtags)
+                    startup['Tags'] = ','.join(newtags)
+                else:
+                    startup['Tags'] = ','.join(lkdtags)
             if lkd['confirmed_locations']:
                 locations = ast.literal_eval(lkd['confirmed_locations'])
                 if 'line1' in locations[0]:

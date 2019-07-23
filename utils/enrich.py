@@ -69,7 +69,7 @@ def enrich(startupList):
     addressList = []
     for startup in startupList:
         try:
-            if startup['CNPJ'] != '' and startup['Razão Social'] == '':
+            if startup['CNPJ'] != '':
                 print("Enriquecendo dados de " + startup['Startup'] + '...')
                 cnpj = startup['CNPJ']
                 cnpj = re.sub(r'[^\d]', '', cnpj)

@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from unidecode import unidecode
 
-from utils import cleaner, enrich, scoring, ddmdata
+from utils import cleaner, enrich, ddmdata
 from utils.privatekeys import tokenTU as token
 
 # Popula um dicionário com as informações do CSV

@@ -14,6 +14,12 @@ masterSL = ddmdata.readcsv(sys.argv[1])
 # Popula um dicionário com as informações do CSV slave
 slaveSL = ddmdata.readcsv(sys.argv[2])
 
+noAdd = False
+
+if len(sys.argv) > 3:
+    if sys.argv[3] == 'noadd':
+        noAdd = True
+
 # Limpa os dados de ambas as listas
 masterSL = cleaner.clean(masterSL)
 slaveSL = cleaner.clean(slaveSL)
@@ -36,21 +42,22 @@ for master in masterSL:
                             print("Completando {} da {} com valor {}".format(key.upper(), master["Startup"].upper(), slave[key]))
     outputWriter.writerow(master)
 
-print("\nAs startups a seguir não foram encontradas na base e estão sendo adicionadas:\n")
-newStartups = []
-for slave in slaveSL:
-    if 'Found' not in slave:
-        print(slave['Startup'])
-        newStartups.append(slave)
+if noAdd == False:
+    print("\nAs startups a seguir não foram encontradas na base e estão sendo adicionadas:\n")
+    newStartups = []
+    for slave in slaveSL:
+        if 'Found' not in slave:
+            print(slave['Startup'])
+            newStartups.append(slave)
 
-for startup in newStartups:
-    cleanStartup = OrderedDict()
-    for key in masterSL[0]:
-        cleanStartup[key] = ""
-    for key in startup:
-        if key in cleanStartup:
-            cleanStartup[key] = startup[key]
-    outputWriter.writerow(cleanStartup)
+    for startup in newStartups:
+        cleanStartup = OrderedDict()
+        for key in masterSL[0]:
+            cleanStartup[key] = ""
+        for key in startup:
+            if key in cleanStartup:
+                cleanStartup[key] = startup[key]
+        outputWriter.writerow(cleanStartup)
 
 outputFile.close()
 print("\nOPERAÇÃO CONCLUÍDA.")
