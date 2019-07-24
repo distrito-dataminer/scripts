@@ -38,7 +38,6 @@ def clean(startupList):
                     else:
                         invalidCnpjs.append(
                             startup['Startup'])
-                        newCnpjList.append(cnpj)
                 while '' in newCnpjList:
                     newCnpjList.remove('')
                 startup['CNPJ'] = ','.join(list(unique(newCnpjList)))

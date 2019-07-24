@@ -23,10 +23,11 @@ if len(sys.argv) > 3:
 # Limpa os dados de ambas as listas
 masterSL = cleaner.clean(masterSL)
 slaveSL = cleaner.clean(slaveSL)
+outputFilename = sys.argv[1].replace('.csv', '')+'_PLUS_'+sys.argv[2]
 
 # Cria um CSV com as colunas relevantes para servir de output
 all_keys = masterSL[0].keys()
-outputFile = open('output.csv', 'w', newline='', encoding = "utf8")
+outputFile = open(outputFilename, 'w', newline='', encoding = "utf8")
 outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
 outputWriter.writeheader()
 
@@ -60,4 +61,9 @@ if noAdd == False:
         outputWriter.writerow(cleanStartup)
 
 outputFile.close()
+
+base = ddmdata.readcsv(outputFilename)
+base = cleaner.clean(base)
+ddmdata.writecsv(base, outputFilename)
+
 print("\nOPERAÇÃO CONCLUÍDA.")
