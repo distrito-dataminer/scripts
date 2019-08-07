@@ -9,6 +9,9 @@ lkdcsv = sys.argv[2]
 
 startupList = ddmdata.readcsv(startupcsv)
 lkdList = ddmdata.readcsv(lkdcsv)
+
+startupList = cleaner.clean(startupList)
+
 addresslist = []
 
 for startup in startupList:
@@ -32,11 +35,11 @@ for startup in startupList:
                 startup['Ano de fundação'] = lkd['founded_year']
             if lkd['cover_image'] != '':
                 startup['Foto de capa'] = lkd['cover_image']
-            if lkd['city'] != '':
+            if lkd['city'] != '' and startup['Cidade'] == '':
                 startup['Cidade'] = lkd['city']
-            if lkd['state'] != '':
+            if lkd['state'] != '' and startup['Estado'] == '':
                 startup['Estado'] = lkd['state']
-            if lkd['country'] != '':
+            if lkd['country'] != '' and startup['País'] == '':
                 startup['País'] = lkd['country']
             if lkd['number_of_self_declared_employees'] != '':
                 startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']

@@ -8,6 +8,7 @@ import geocoder
 from utils import privatekeys
 from collections import OrderedDict
 from time import sleep
+from more_itertools import unique_everseen as unique
 
 devkey = privatekeys.devkey
 token = privatekeys.tokenTU
@@ -69,7 +70,7 @@ def enrich(startupList):
     addressList = []
     for startup in startupList:
         try:
-            if startup['CNPJ'] != '':
+            if startup['CNPJ'] != '' and startup['Razão Social'] == '':
                 print("Enriquecendo dados de " + startup['Startup'] + '...')
                 cnpj = startup['CNPJ']
                 cnpj = re.sub(r'[^\d]', '', cnpj)
@@ -102,7 +103,12 @@ def enrich(startupList):
                     emaillist = []
                     for email in data['EMAILS']:
                         emaillist.append(email['DS_EMAIL'])
-                        startup['E-mail'] = emaillist
+                        if 'E-mail' in startup:
+                            if startup['E-mail']:
+                                currentEmails = startup['E-mail'].split(',')
+                                emaillist = emaillist + currentEmails
+                        emaillist = list(unique(emaillist))
+                        startup['E-mail'] = ','.join(emaillist)
                 except Exception as e:
                     print(startup['Startup'] + " deu erro no e-mail:")
                     print(repr(e))

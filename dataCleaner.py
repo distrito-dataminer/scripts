@@ -9,7 +9,7 @@ import csv
 import re
 from collections import OrderedDict
 from unidecode import unidecode
-from utils import cleaner, scoring, ddmdata
+from utils import cleaner, ddmdata
 
 # Popula um dicionário com as informações do CSV
 startupList = ddmdata.readcsv(sys.argv[1])
@@ -24,14 +24,9 @@ startupList = cleaner.clean(cleaner.clean(cleaner.clean(startupList)))
 
 # Pontua o nível de preenchimento se essa opção estiver ligada
 if score == True:
-    scoring.ndp(startupList)
+    startupList = cleaner.score(startupList)
 
 # Cria um CSV com as colunas relevantes para servir de output e escreve os dados limpos
-all_keys = startupList[0].keys()
-outputFile = open('output.csv', 'w', newline='', encoding="utf8")
-outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
-outputWriter.writeheader()
-outputWriter.writerows(startupList)
+ddmdata.writecsv(startupList, sys.argv[1].replace('.csv','')+'_clean.csv')
 
 print("Pronto!")
-outputFile.close()

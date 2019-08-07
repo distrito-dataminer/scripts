@@ -14,7 +14,7 @@ class CsvWriterPipeline(object):
 
     def open_spider(self, spider):
         now = datetime.now().replace(microsecond = 0)
-        self.file = open(r"C:\test\LKDbotOutput {}.csv".format(now.strftime('%Y-%m-%d %H.%M')), 'w', newline='', encoding='utf8')
+        self.file = open(r"C:\test\{} Output {}.csv".format(spider.name, now.strftime('%Y-%m-%d %H.%M')), 'w', newline='', encoding='utf8')
         self.items = []
         self.colnames = []
 

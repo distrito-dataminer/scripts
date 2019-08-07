@@ -7,10 +7,11 @@
 import sys, csv, webbrowser, bs4, requests, re, shutil, datetime
 from collections import OrderedDict
 from utils import cleaner, ddmdata, sanity
+from more_itertools import unique_everseen as unique
 
 # Desativa a exigência de certificado HTTPS ao pegar as informações
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+import urllib3
+urllib3.disable_warnings()
 
 # Usa o arquivo determinado pelo primeiro argumento como fonte dos sites e nomes
 csvFile = sys.argv[1]
@@ -30,10 +31,11 @@ if len(sys.argv) > 3:
 startupList = ddmdata.readcsv(sys.argv[1])
 
 # Adiciona as informações coletadas como colunas caso elas já não existam
-scraperKeys = ['Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response']
+scraperKeys = ['Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response', 'E-mail']
 for key in scraperKeys:
-    if key not in startupList[0]:
-        startupList[0][key] = ""
+    for startup in startupList:
+        if key not in startup:
+            startup[key] = ""
 
 # Cria um CSV com as colunas relevantes para servir de output
 all_keys = startupList[0].keys()
@@ -126,14 +128,14 @@ def getCnpj(content):
     result = mainScrape + termosScrape + privacidadeScrape
     result = list(OrderedDict.fromkeys(result))
     if result == []:
-        result = ""
         print("Nenhum CNPJ encontrado.")
+        return ''
     elif len(result) == 1:
         print("Um CNPJ encontrado: " + result[0])
-        result = result[0]
+        return result[0]
     elif len(result) > 1:
         print("Mais de um CNPJ encontrado: " + str(result))
-    return result
+        return ','.join(result)
 
 # TODO: buscar CNPJ no registro do site no registro.br
 def getRegistro(url):
@@ -258,6 +260,44 @@ def getCrunchbase(content):
         print("Mais de um Crunchbase encontrado: " + str(result))
     return result
 
+def scrapeEmail(content):
+    emailRegex = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
+    results = emailRegex.findall(content.text)
+    for item in results:
+        mo = emailRegex.search(item)
+        item = mo.group()
+    return results
+
+def getContato(content):
+    contatoRegex = re.compile(".*(Contato|Contact|Fale Conosco).*", re.IGNORECASE)
+    termosResults = content.find_all("a", href=True, title=contatoRegex)
+    results = []
+    for item in termosResults:
+        site, response = getSite(item['href'])
+        if response != 200:
+            continue
+        result = scrapeEmail(site)
+        results += result
+    return results
+
+def getEmail(content, currentemails):
+    result = []
+    mainScrape = scrapeEmail(content)
+    contatoScrape = getContato(content)
+    result += mainScrape + contatoScrape
+    result = list(unique(result))
+    if result == []:
+        print("Nenhum E-mail encontrado.")
+    elif len(result) == 1:
+        print("Um E-mail encontrado: " + result[0])
+    elif len(result) > 1:
+        print("Mais de um E-mail encontrado: " + str(result))
+    if currentemails != '':
+        currentemailslist = currentemails.split(',')
+        result = result + currentemailslist
+        result = list(unique(result))
+    return ','.join(result)
+
 # Pega o site de cada startup do CSV e roda cada uma das buscas as buscas nele
 for startup in startupList:
     if int(startup['ID']) < int(min):
@@ -267,9 +307,13 @@ for startup in startupList:
         outputWriter.writerow(startup)
         continue
     # Comente esse trecho para reobter dados de startups que já tem o campo Response preenchido
-    if startup['Response'] != '':
+    #if startup['Response'] != '':
+    #    outputWriter.writerow(startup)
+    #    print('\n{} já tem Response. Pulando para o próximo site... \n'.format(startup['Startup']))
+    #    continue
+    if startup['Tirar?'] != '':
         outputWriter.writerow(startup)
-        print('\n{} já tem Response. Pulando para o próximo site... \n'.format(startup['Startup']))
+        print('\n{} está marcada para remoção. Pulando para o próximo site... \n'.format(startup['Startup']))
         continue
     print("(" + str(startupList.index(startup) + 1) + "/" + str(len(startupList)) + ")" + "\nRequisitando site da " + startup['Startup'] + "...")
     print("URL: " + startup['Site'])
@@ -289,6 +333,7 @@ for startup in startupList:
         startup['Twitter'] = getTwitter(site)
         startup['Instagram'] = getInstagram(site)
         startup['Crunchbase'] = getCrunchbase(site)
+        startup['E-mail'] = getEmail(site, startup['E-mail'])
     elif noReplace == True:
         if ('CNPJ' not in startup) or (startup['CNPJ'] == ''):
             startup['CNPJ'] = getCnpj(site)
@@ -302,12 +347,14 @@ for startup in startupList:
             startup['Instagram'] = getInstagram(site)
         if 'Crunchbase' not in startup or startup['Crunchbase'] == '':
             startup['Crunchbase'] = getCrunchbase(site)
+        #if 'E-mail' not in startup or startup['E-mail'] == '':
+        startup['E-mail'] = getEmail(site, startup['E-mail'])
     outputWriter.writerow(startup)
     print("\n")
 
 # Fecha o arquivo de output, renomeia para evitar substituição e finaliza o programa
 outputFile.close()
 now = datetime.datetime.now()
-shutil.move("output.csv", "output " + now.strftime("%Y-%m-%d %Hh%Mm") + ".csv")
+shutil.move("output.csv", "siteScraper_output_" + now.strftime("%Y-%m-%d %Hh%Mm") + ".csv")
 print("Tarefa concluída.")
 sys.exit()

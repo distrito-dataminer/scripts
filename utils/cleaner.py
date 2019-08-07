@@ -12,7 +12,6 @@ from collections import OrderedDict
 from unidecode import unidecode
 from utils import datasets
 
-
 def clean(startupList):
 
     invalidCnpjs = []
@@ -89,7 +88,8 @@ def clean(startupList):
                     mo = fbRegex.search(fb)
                     if mo != None:
                         fb = "http://" + mo.group().lower().strip()
-                        newFbList.append(fb)
+                        if fb not in datasets.invalidFacebook:
+                            newFbList.append(fb)
                     else:
                         print("Removendo Facebook inválido: {}".format(fb))
                 startup['Facebook'] = ','.join(list(unique(newFbList)))
@@ -105,7 +105,8 @@ def clean(startupList):
                     mo = ttRegex.search(tt)
                     if mo != None:
                         tt = "http://" + mo.group().lower().strip()
-                        newTtList.append(tt)
+                        if tt not in datasets.invalidTwitter:
+                            newTtList.append(tt)
                     else:
                         if 'facebook' in tt.lower():
                             startup['Facebook'] += ',' + tt
@@ -207,6 +208,15 @@ def clean(startupList):
                     else:
                         mydate = datetime.fromtimestamp(jsondate)
                     startup['Data de abertura'] = mydate.strftime('%Y-%m-%d')
+
+        if 'E-mail' in startup:
+            if startup['E-mail']:
+                emailList = startup['E-mail'].split(',')
+                for email in emailList:
+                    for invalidEmail in datasets.invalidEmail:
+                        if invalidEmail in email:
+                            emailList.remove(email)
+                startup['E-mail'] = ','.join(list(unique(emailList)))
 
     # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
         exceptionList = ['Descrição']

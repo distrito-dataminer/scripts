@@ -90,3 +90,9 @@ cidades = {
 invalidsites = [
     'http://facebook.com', 'http://linkedin.com', 'http://google.com', 'http://pipe.social'
 ]
+
+invalidFacebook = ['http://facebook.com/sharer', 'http://facebook.com/share']
+
+invalidTwitter = ['http://twitter.com/share']
+
+invalidEmail = ['@sentry.wixpress.com', '@example', '@exemplo', '@sentry.io', 'communities-translations', 'ajax-loader']

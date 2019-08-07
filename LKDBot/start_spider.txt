@@ -1,6 +1,0 @@
-steps to start the spider:
-1. give path in details.py where your sample data csv file is available
-2. run the command --> scrapy link_din_crawler
-3. use python 3 and scrapy 1.6.0
-4. https catche is enabled so it will not create any blockage (we have requests stored in .scrapy file)
-
