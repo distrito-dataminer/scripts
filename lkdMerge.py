@@ -35,11 +35,11 @@ for startup in startupList:
                 startup['Ano de fundação'] = lkd['founded_year']
             if lkd['cover_image'] != '':
                 startup['Foto de capa'] = lkd['cover_image']
-            if lkd['city'] != '' and startup['Cidade'] == '':
+            if 'Cidade' not in startup or lkd['city'] != '' and startup['Cidade']:
                 startup['Cidade'] = lkd['city']
-            if lkd['state'] != '' and startup['Estado'] == '':
+            if 'Estado' not in startup or lkd['state'] != '' and startup['Estado'] == '':
                 startup['Estado'] = lkd['state']
-            if lkd['country'] != '' and startup['País'] == '':
+            if 'País' not in startup or lkd['country'] != '' and startup['País'] == '':
                 startup['País'] = lkd['country']
             if lkd['number_of_self_declared_employees'] != '':
                 startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']

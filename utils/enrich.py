@@ -42,9 +42,12 @@ def lkdAdd(endereco, startup):
                            ('Logradouro', ''), ('Tipo da rua',
                                                 ''), ('Nome da rua', ''),
                            ('Número', ''), ('Complemento', ''), ('End. Fiscal', '')])
-    address['Startup'] = startup['Startup']
-    address['Startup ID'] = startup['ID']
-    address['CNPJ'] = startup['CNPJ']
+    if 'Startup' in startup:
+        address['Startup'] = startup['Startup']
+    if 'ID' in startup:
+        address['Startup ID'] = startup['ID']
+    if 'CNPJ' in startup:
+        address['CNPJ'] = startup['CNPJ']
     if 'headquarter' in endereco:
         if endereco['headquarter'] == True:
             address['End. Fiscal'] = 'HQ LKD'

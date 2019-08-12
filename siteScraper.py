@@ -31,7 +31,7 @@ if len(sys.argv) > 3:
 startupList = ddmdata.readcsv(sys.argv[1])
 
 # Adiciona as informações coletadas como colunas caso elas já não existam
-scraperKeys = ['Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response', 'E-mail']
+scraperKeys = ['ID', 'Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response', 'E-mail']
 for key in scraperKeys:
     for startup in startupList:
         if key not in startup:
@@ -300,18 +300,19 @@ def getEmail(content, currentemails):
 
 # Pega o site de cada startup do CSV e roda cada uma das buscas as buscas nele
 for startup in startupList:
-    if int(startup['ID']) < int(min):
-        outputWriter.writerow(startup)
-        continue 
-    if int(startup['ID']) > int(max):
-        outputWriter.writerow(startup)
-        continue
+    if startup['ID']:
+        if int(startup['ID']) < int(min):
+            outputWriter.writerow(startup)
+            continue 
+        if int(startup['ID']) > int(max):
+            outputWriter.writerow(startup)
+            continue
     # Comente esse trecho para reobter dados de startups que já tem o campo Response preenchido
     #if startup['Response'] != '':
     #    outputWriter.writerow(startup)
     #    print('\n{} já tem Response. Pulando para o próximo site... \n'.format(startup['Startup']))
     #    continue
-    if startup['Tirar?'] != '':
+    if 'Tirar?' in startup and startup['Tirar?']:
         outputWriter.writerow(startup)
         print('\n{} está marcada para remoção. Pulando para o próximo site... \n'.format(startup['Startup']))
         continue

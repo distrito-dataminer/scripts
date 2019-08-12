@@ -54,7 +54,7 @@ def clean(startupList):
                 if mo != None:
                     newSite = mo.group().lower().strip().strip('/').strip()
                 if newSite in datasets.invalidsites:
-                    print('{} tem site inválido: {}. Removendo.'.format(startup['Startup'], startup['Site']))
+                    print('Site inválido: {}. Removendo.'.format(startup['Site']))
                     startup['Site'] = ''
                 else:
                     startup['Site'] = newSite
@@ -216,6 +216,9 @@ def clean(startupList):
                     for invalidEmail in datasets.invalidEmail:
                         if invalidEmail in email:
                             emailList.remove(email)
+                    charList = [' ', '[', ']', "'"]
+                    for char in charList:
+                        email = email.replace(char, '')
                 startup['E-mail'] = ','.join(list(unique(emailList)))
 
     # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
