@@ -21,6 +21,7 @@ tagMatches = []
 descriptionMatches = []
 tndMatches = []
 categoryMatches = []
+setorMatches = []
 
 tagDict = {}
 descDict = {}
@@ -32,16 +33,26 @@ for term in searchTerms:
     catDict[term.lower()] = 0
 
 for startup in startupList:
+    if startup['Tirar?'] != '':
+        continue
+    matchCount = 0
     for term in searchTerms:
         if term.lower() in startup['Tags'].lower():
             tagMatches.append(startup)
             tagDict[term.lower()] += 1
+            matchCount += 1
         if term.lower() in startup['Descrição'].lower():
             descriptionMatches.append(startup)
             descDict[term.lower()] += 1
+            matchCount += 1
         if term.lower() in startup['Categoria'].lower() or term.lower() in startup['Subcategoria'].lower():
             categoryMatches.append(startup)
             catDict[term.lower()] += 1
+            matchCount += 1
+        if term.lower() in startup['Setor'].lower():
+            setorMatches.append(startup)
+            matchCount += 1
+    startup['Match Count'] = matchCount
 
 for match in tagMatches:
     if match in descriptionMatches:
@@ -51,6 +62,8 @@ tagMatches = list(unique(tagMatches))
 descriptionMatches = list(unique(descriptionMatches))
 tndMatches = list(unique(tndMatches))
 categoryMatches = list(unique(categoryMatches))
+setorMatches = list(unique(setorMatches))
+mainMatches = list(unique(setorMatches + categoryMatches + tndMatches))
 
 print('\n\nTag matches:')
 print(len(tagMatches))
@@ -76,3 +89,6 @@ ddmdata.writecsv(tagMatches, 'Matches_Tags.csv')
 ddmdata.writecsv(descriptionMatches, 'Matches_Descrição.csv')
 ddmdata.writecsv(tndMatches, 'Matches_Tags&Descrição.csv')
 ddmdata.writecsv(categoryMatches, 'Matches_Categoria.csv')
+ddmdata.writecsv(setorMatches, 'Matches_Setor.csv')
+ddmdata.writecsv(mainMatches, 'Matches_Main.csv')
+

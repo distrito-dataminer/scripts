@@ -5,9 +5,16 @@ import requests
 import csv
 import scrapy
 import re
+import bs4
+
+from collections import OrderedDict
+from more_itertools import unique_everseen as unique
 
 from scrapy import Selector
 from urllib.parse import urljoin
+
+import urllib3
+urllib3.disable_warnings()
 
 cookies = {
     'bcookie': 'v=2&efa04615-f7bd-4354-8059-dfd6ed04652c',
@@ -570,3 +577,288 @@ class InstagramData(scrapy.Spider):
             profile_details['posts_desc'] = re.search(r'([\d\.,]+[^\d]+)(publicações|posts)', igDesc, re.IGNORECASE).group(1).strip()
 
             yield profile_details
+
+class SiteScraper(scrapy.Spider):
+    name = "sitescraper"
+    custom_settings = {
+        'DOWNLOAD_DELAY': 15
+    }
+    start_urls = ['https://www.instagram.com/']
+    allowed_domains = ["www.instagram.com"]
+
+    def parse(self, response):
+
+        profiles = []        
+
+        f = open(r'C:\test\ssdata.csv', 'r', encoding='utf8')
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            url = row['Site']
+            if url:
+                profiles.append(url)
+        
+        for profile in profiles:
+            
+            startup = {}
+            startup['Site'] = profile
+            startup['E-mail'] = ''
+
+            site, response = self.getSite(startup['Site'])
+            startup['Response'] = response
+            if response != 200:
+                continue
+            startup['CNPJ'] = self.getCnpj(site)
+            startup['CNPJ'] = self.getRegistro(startup['Site'])
+            startup['LinkedIn'] = self.getLinkedin(site)
+            startup['Facebook'] = self.getFacebook(site)
+            startup['Twitter'] = self.getTwitter(site)
+            startup['Instagram'] = self.getInstagram(site)
+            startup['Crunchbase'] = self.getCrunchbase(site)
+            startup['E-mail'] = self.getEmail(site, startup['E-mail'])
+
+            yield startup
+
+    def getSite(self, site):
+        if ("http" and "://") not in site:
+            site = "http://" + site
+        try:
+            res = requests.get(site, verify=False, timeout=(2, 15), headers=headers)
+        except Exception as e:
+            try:
+                print('Erro. Adicionando WWW.')
+                site = site.replace('http://', 'http://www.')
+                res = requests.get(site, verify=False, timeout=(2, 15))
+            except:
+                print('Erro mesmo com WWW. Enviando erro original.')
+                return 'ERRO', repr(e)
+        if res.status_code != 200:
+            try:
+                if 'http://www.' not in site:
+                    print('Status code ruim. Adicionando WWW.')
+                    site = site.replace('http://', 'http://www.')
+                    res2 = requests.get(site, verify=False, timeout=(2, 15))
+                    if res2.status_code == 200:
+                        soup = bs4.BeautifulSoup(res2.text, features="lxml")
+                        return soup, res2.status_code
+                    else:
+                        print('Adicionar o WWW não resolveu. Prosseguindo com status code original.')
+            except:
+                print('Erro ao adicionar WWW. Prosseguindo com status code ruim.')
+        soup = bs4.BeautifulSoup(res.text, features="lxml")
+        return soup, res.status_code
+
+    # Busca números no formato de CNPJ no site e retorna os resultados
+    def scrapeCnpj(self, content):
+        cnpjRegex = re.compile(r"\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}")
+        results = cnpjRegex.findall(content.text)
+        for item in results:
+            mo = cnpjRegex.search(item)
+            item = mo.group()
+        return results
+
+    # Busca links na página contendo "termos" ou "terms" e retorna uma lista deles
+    def getTermos(self, content):
+        termosRegex = re.compile(".*(Termos|Terms).*", re.IGNORECASE)
+        termosResults = content.find_all("a", href=True, title=termosRegex)
+        results = []
+        for item in termosResults:
+            site, response = self.getSite(item['href'])
+            if response != 200:
+                continue
+            result = self.scrapeCnpj(site)
+            results += result
+        return results
+
+    # Busca links na página contendo "privacidade" ou "privacy" e retorna uma lista deles
+    def getPrivacidade(self, content):
+        privacidadeRegex = re.compile(".*(Privacidade|Privacy).*", re.IGNORECASE)
+        privacidadeResults = content.find_all("a", href=True, title=privacidadeRegex)
+        results = []
+        for item in privacidadeResults:
+            site, response = self.getSite(item['href'])
+            if response != 200:
+                continue
+            result = self.scrapeCnpj(site)
+            results += result
+        return results
+        
+    # Roda o scrapeCnpj() no site principal, página de termos e página de política de privacidade, retorna lista com todos os resultados
+    def getCnpj(self, content):
+        result = []
+        mainScrape = self.scrapeCnpj(content)
+        termosScrape = self.getTermos(content)
+        privacidadeScrape = self.getPrivacidade(content)
+        result = mainScrape + termosScrape + privacidadeScrape
+        result = list(OrderedDict.fromkeys(result))
+        if result == []:
+            print("Nenhum CNPJ encontrado.")
+            return ''
+        elif len(result) == 1:
+            print("Um CNPJ encontrado: " + result[0])
+            return result[0]
+        elif len(result) > 1:
+            print("Mais de um CNPJ encontrado: " + str(result))
+            return ','.join(result)
+
+    # TODO: buscar CNPJ no registro do site no registro.br
+    def getRegistro(self, url):
+        url = url.strip('/').replace('http://', '')
+        if url[-3:] == ".br":
+            print("CNPJ pode estar no registro do domínio! Verificar WHOIS.")
+            return ""
+        else:
+            return ""
+
+#    def getLogo(content):
+#        logoRegex = re.compile(r"""(https?:\/\/.[^"\s]*?logo.[^"\s]*?\.(png|jpg|svg|tif|jpeg|bmp))""", re.IGNORECASE)
+#        matches = re.findall(logoRegex, str(content))
+#        results = []
+#        for item in matches:
+#            results.append(item[0])
+#        if results == []:
+#            result = ""
+#            print("Nenhum Logo encontrado.")
+#        elif len(results) == 1:
+#            print("Um Logo encontrado: " + results[0])
+#            result = results[0]
+#        elif len(results) > 1:
+#            print("Mais de um Logo encontrado: " + str(results))
+#            result = results
+#        return result
+
+    # Busca links para páginas de empresa no LinkedIn e retorna os resultados
+    def getLinkedin(self, content):
+        lkdRegex = re.compile(r"linkedin\.com\/company\/[^&?\/]*", re.IGNORECASE)
+        soupResults = content.find_all("a", href=lkdRegex)
+        result = []
+        for item in soupResults:
+            mo = lkdRegex.search(item['href'])
+            result.append("http://" + mo.group().split("?", 1)[0].split("&", 1)[0].replace('/about',"").strip('/').lower()) 
+        result = list(OrderedDict.fromkeys(result))
+        if result == []:
+            result = ""
+            print("Nenhum LinkedIn encontrado.")
+        elif len(result) == 1:
+            print("Um LinkedIn encontrado: " + result[0])
+            result = result[0]
+        elif len(result) > 1:
+            print("Mais de um LinkedIn encontrado: " + str(result))
+        return result
+
+    # Busca links para o Facebook e retorna os resultados
+    def getFacebook(self, content):
+        fbRegex = re.compile(r"(facebook|fb)\.com\/(pg\/|page\/|pages\/)?[^\/?&\.]*", re.IGNORECASE)
+        soupResults = content.find_all('a', href=fbRegex)
+        result = []
+        for item in soupResults:
+            mo = fbRegex.search(item['href'])
+            url = ("http://" + mo.group().replace('/pages','').replace('/pg', '').replace('/profile', '').replace('fb.com', 'facebook.com').strip('/').lower())
+            if url != "http://facebook.com":
+                result.append(url)
+        result = list(OrderedDict.fromkeys(result))
+        if result == []:
+            result = ""
+            print("Nenhum Facebook encontrado.")
+        elif len(result) == 1:
+            print("Um Facebook encontrado: " + result[0])
+            result = result[0]
+        elif len(result) > 1:
+            print("Mais de um Facebook encontrado: " + str(result))
+        return result
+
+    # Busca links para o Instagram e retorna os resultados
+    def getInstagram(self, content):
+        igRegex = re.compile(r"instagram\.com\/[^&?\/]*", re.IGNORECASE)
+        soupResults = content.find_all("a", href=igRegex)
+        result = []
+        for item in soupResults:
+            mo = igRegex.search(item['href'])
+            result.append("http://" + mo.group().replace('/about',"").strip('/').lower())
+        result = list(OrderedDict.fromkeys(result))
+        if result == []:
+            result = ""
+            print("Nenhum Instagram encontrado.")
+        elif len(result) == 1:
+            print("Um Instagram encontrado: " + result[0])
+            result = result[0]
+        elif len(result) > 1:
+            print("Mais de um Instagram encontrado: " + str(result))
+        return result
+
+    # Busca links para o Twitter e retorna os resultados
+    def getTwitter(self, content):
+        ttRegex = re.compile(r"twitter\.com\/[^&?\/].*", re.IGNORECASE)
+        soupResults = content.find_all("a", href=ttRegex)
+        result = []
+        for item in soupResults:
+            mo = ttRegex.search(item['href'])
+            result.append("http://" + mo.group().replace('/about',"").strip('/').lower())
+        result = list(OrderedDict.fromkeys(result))
+        if result == []:
+            result = ""
+            print("Nenhum Twitter encontrado.")
+        elif len(result) == 1:
+            print("Um Twitter encontrado: " + result[0])
+            result = result[0]
+        elif len(result) > 1:
+            print("Mais de um Twitter encontrado: " + str(result))
+        return result
+
+    # Busca links para páginas de organização do Crunchbase e retorna os resultados
+    def getCrunchbase(self, content):
+        cbRegex = re.compile(r"crunchbase\.com\/organization\/[^&?\/]*", re.IGNORECASE)
+        soupResults = content.find_all("a", href=cbRegex)
+        result = []
+        for item in soupResults:
+            mo = cbRegex.search(item['href'])
+            result.append("http://" + mo.group().split("?", 1)[0].split("&", 1)[0].strip('/').lower())
+        result = list(OrderedDict.fromkeys(result))
+        if result == []:
+            result = ""
+            print("Nenhum Crunchbase encontrado.")
+        elif len(result) == 1:
+            print("Um Crunchbase encontrado: " + result[0])
+            result = result[0]
+        elif len(result) > 1:
+            print("Mais de um Crunchbase encontrado: " + str(result))
+        return result
+
+    def scrapeEmail(self, content):
+        emailRegex = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
+        results = emailRegex.findall(content.text)
+        for item in results:
+            mo = emailRegex.search(item)
+            item = mo.group()
+        return results
+
+    def getContato(self, content):
+        contatoRegex = re.compile(".*(Contato|Contact|Fale Conosco).*", re.IGNORECASE)
+        termosResults = content.find_all("a", href=True, title=contatoRegex)
+        results = []
+        for item in termosResults:
+            site, response = self.getSite(item['href'])
+            if response != 200:
+                continue
+            result = self.scrapeEmail(site)
+            results += result
+        return results
+
+    def getEmail(self, content, currentemails):
+        result = []
+        mainScrape = self.scrapeEmail(content)
+        contatoScrape = self.getContato(content)
+        result += mainScrape + contatoScrape
+        result = list(unique(result))
+        if result == []:
+            print("Nenhum E-mail encontrado.")
+        elif len(result) == 1:
+            print("Um E-mail encontrado: " + result[0])
+        elif len(result) > 1:
+            print("Mais de um E-mail encontrado: " + str(result))
+        if currentemails != '':
+            currentemailslist = currentemails.split(',')
+            result = result + currentemailslist
+            result = list(unique(result))
+        return ','.join(result)
+
