@@ -13,6 +13,8 @@ from more_itertools import unique_everseen as unique
 from scrapy import Selector
 from urllib.parse import urljoin
 
+from bs4 import BeautifulSoup
+
 import urllib3
 urllib3.disable_warnings()
 
@@ -21,32 +23,31 @@ cookies = {
     'bscookie': 'v=1&20181126132739da50067d-d328-4290-8041-abc247df16e2AQGwX8Q57D6Zj8vKyMBnhxn1_I2JOw2S',
     'JSESSIONID': 'ajax:9028902051245035064',
     'visit': 'v=1&G',
-    '_lipt': 'CwEAAAFscov9DQg4viDZPquCLvPFbxTetUZ9_vwqRpula8nkJIIuyrAjhUHS-MyTTpB0iyT19N9Qey1asHpfuD1s14TvkQuYy5DT5oHXX4EwgN8ey07FzKm65Lj8p9RNchdI1t39vwnN1vk9pVyw72q3f9sLR66a4hvnC6h0_JVdyxM8DTLuNWaruigYEc8SDiuEDO6WXHUcrM4z1OguPeqvMv7Si9IlAYzSS5-ZQQTDHCDeWtR9esg7Foifwu4m7KoUNJUkPfETNxXJ4JuTA9fn4PU9tUSz7jcX49UTfiMc0_H31j0TLGHTesEcMHHBQj_T29OFCEm3rFl7CKKpwU1JFB6EGgTjwLuwQV4dWq7Ci0pEjQRZ6ZfjYA',
+    '_lipt': 'CwEAAAFs00hY9LT3DphCGIZf0icX7SJmvw8l18CmBoOb9-qlalXGwOhwxmIB-TELXH_mQNVw4WK4-ZV5FFKvZtr4gHlTUyQ7FG63JtXsbhYj8Ig-EfvGQRZAn5eawf-mHVtIfqLtfmKkzL7-02n27zvb003XYUxeI-NFI21Zx1ox3zKr2_1Y9p7gRkzwmEeEcAut9tMPBlkXhGl0AhRcYZCfw9yctUXa5hIwuFk-Ze78dvDo4VFrNnQBgpiojIN9Q9QX6SOoZLKUBjxChuw_nprHhsQkisuaZ6FUqehm_Tiy66EDXIbqYVSOFvl519BenmNmdcB6rjN-5NleGBht8qTa314aD2PU9I_r31AiKP20-3-CreV4M3T1FEXAmgsnzhwfJ1p0Dzi7sQ',
     'org_tcphc': 'true',
-    'AMCV_14215E3D5995C57C0A495C55%40AdobeOrg': '-1303530583%7CMCIDTS%7C18117%7CMCMID%7C91815213977225861640575468564591355059%7CMCOPTOUT-1565379818s%7CNONE%7CvVersion%7C3.3.0',
-    'UserMatchHistory': 'AQIGXrHHcZEoLQAAAWx3epJES9dlfAxOBwp_lm1xQ1Z0EQArLlvK7HWJgp6GBMSciRux5ykwO3hRUq5fbfH5HEiUK_AdDbSTSFdlHb0ux5X5zFSbhTBVfej_XpHGVn4szcp7pbgHSTlk0wj14oBZWqhx15CqVhnR4eww1GA0wg7hqhf6',
+    'AMCV_14215E3D5995C57C0A495C55%40AdobeOrg': '-1303530583%7CMCIDTS%7C18135%7CMCMID%7C91815213977225861640575468564591355059%7CMCOPTOUT-1566931138s%7CNONE%7CvVersion%7C3.3.0',
+    'UserMatchHistory': 'AQLxT_zigaY1nQAAAWzUeVeqLogNAXCIQPQmRHcA9U99rX4aJlFR30h3WIt0H6k4QqY6Yxx1VIYIItUwrwyKl38JUGhSdgomAKpdMBbn0N5AfjB3HflDWsz-18r6OBMB2_iLfuiAPnjLmN0HRnbjmEv8MrKEWvCaTdiPPe42RW4Wm6zk',
     'VID': 'V_2019_03_14_16_1004509',
     'utag_main': 'v_id:016a03d88eb7000f0d6316193d310004e00fe00d00bd0$_sn:3$_se:3$_ss:0$_st:1562880149903$vapi_domain:linkedin.com$ses_id:1562878260064%3Bexp-session$_pn:3%3Bexp-session',
-    'sl': 'v=1&Vu5lY',
+    'sl': 'v=1&u3-Mu',
     'lissc1': '1',
     'lissc2': '1',
-    'li_at': 'AQEDARvom5kCaTcCAAABbEMbkMQAAAFsjB2wy04AHQ_14jdHpTLSW4RycLgZWmUIm7KIHs59auV-TFq88Ll0Lw_fBjejleRp3sGftr8WJJxv35Rklc5uB0Qkz_GtPooTsfKwC9uoX-avLEirf_v6jknw',
+    'li_at': 'AQEDARvom5kAALDPAAABbJuF6YYAAAFs46zznE0Aox0lppbPr6441PR8S0TrtzNK4ERnxfUFaHUoTiIgtIWrMp5punTlZR3nsDdv0kkyDP8lYlPVqC7ccrlXNwePsWE4xWELQSq_V3U2MrJmmhd9FY7n',
     'liap': 'true',
-    'AMCVS_14215E3D5995C57C0A495C55%40AdobeOrg': '1',
-    'sdsc': '22%3A1%2C1564769093865%7ECONN%2C0pTMJNBGrXfe7jSER3T96u%2Fb47f8%3D',
-    'PLAY_SESSION': 'eyJhbGciOiJIUzI1NiJ9.eyJkYXRhIjp7InNlc3Npb25faWQiOiI2NTFjMjIxMy00M2RjLTQ0ODctOTRjMy0yOTc2MGUwOWE1NDB8MTU2NTI5MDU1OSIsInJlY2VudGx5LXNlYXJjaGVkIjoiIiwicmVmZXJyYWwtdXJsIjoiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS8iLCJhaWQiOiIiLCJSTlQtaWQiOiJ8MCIsInJlY2VudGx5LXZpZXdlZCI6IjE2NDYiLCJDUFQtaWQiOiJOMk00WlRjM05tTXROemt4T1MwMFpUSTBMVGc1TUdZdE9XWXdaVFpqTURkbU1ETXciLCJleHBlcmllbmNlIjoiZW50aXR5IiwiaXNfbmF0aXZlIjoiZmFsc2UiLCJ3aGl0ZWxpc3QiOiJ7fSIsInRyayI6IiJ9LCJuYmYiOjE1NjUyOTA1NjYsImlhdCI6MTU2NTI5MDU2Nn0.mHoFfcNFq7QMhwxLLI3XyRvU8mJDzWF0jldxHwsRqL0',
+    'lidc': 'b=VB17:g=2691:u=233:i=1566929788:t=1567016188:s=AQFRBPCpsNpZuYpsdxPLlR8h3xqoKDDl',
     'lang': 'v=2&lang=pt-br',
+    'AMCVS_14215E3D5995C57C0A495C55%40AdobeOrg': '1',
+    'sdsc': '59%3A1%2C1566912716469%7ECAOR%2C0%7ECONN%2C73443%7EJBSK%2C-452170%7EJOBS%2C-452178chUBffuQscrGIm2Ws3TQwozS%2Fwk%3D',
+    'PLAY_SESSION': 'eyJhbGciOiJIUzI1NiJ9.eyJkYXRhIjp7InNlc3Npb25faWQiOiIzNzM5MTEwNy03NDg2LTQyZTAtYWNlYy01NjNhOGIzYzdjYjB8MTU2NjkxNTI0MSIsInJlY2VudGx5LXNlYXJjaGVkIjoiIiwicmVmZXJyYWwtdXJsIjoiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS8iLCJhaWQiOiIiLCJSTlQtaWQiOiJ8MCIsInJlY2VudGx5LXZpZXdlZCI6IjUwMjMwIiwiQ1BULWlkIjoiWW1aa09HUTNPVGN0Tm1abFppMDBaVFZoTFdGaE9HVXRNVGN5WW1ZME0yTTJObVU0IiwiZXhwZXJpZW5jZSI6ImVudGl0eSIsImlzX25hdGl2ZSI6ImZhbHNlIiwid2hpdGVsaXN0Ijoie30iLCJ0cmsiOiIifSwibmJmIjoxNTY2OTE1MjQ1LCJpYXQiOjE1NjY5MTUyNDV9.Njz22pQlyMiIXslxuSAkSwVQRK27ACOcGF_OKJxI-Qs',
     'PLAY_LANG': 'en',
-    'lidc': 'b=VB17:g=2656:u=211:i=1565372613:t=1565457463:s=AQGZVg0wYoL0-u_DxnhP1uNyZTWp3W5z',
 }
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0',
-    'Accept': '*/*',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-    'Referer': 'https://www.linkedin.com/feed/',
-    'Content-Type': 'text/plain;charset=UTF-8',
     'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
     'TE': 'Trailers',
 }
 
@@ -83,7 +84,8 @@ class LinkedinData(scrapy.Spider):
 
             if 'fs_normalized_company:' in raw_details:
                 companyIdRegex = re.compile(r'fs_followingInfo:urn:li:company:(\d+)')
-                companyId = re.findall(companyIdRegex, raw_details)[0]
+                companyIds = re.findall(companyIdRegex, raw_details)
+                companyId = companyIds[0]
 
             details = json.loads(raw_details)
             profile_details = {}
@@ -125,6 +127,9 @@ class LinkedinData(scrapy.Spider):
 
             if count:
                 profile_details['follower_count'] = count
+
+            if companyIds:
+                profile_details['Company IDs'] = companyIds
 
             if name:
                 profile_details['name'] = name
@@ -370,7 +375,7 @@ class FacebookData(scrapy.Spider):
 
 class TwitterData(scrapy.Spider):
     name = "ttcrawler"
-    start_urls = ['https://www.twitter.com/']
+    start_urls = ['https://mobile.twitter.com/']
     allowed_domains = ["www.twitter.com"]
     custom_settings = {
         'DOWNLOAD_DELAY': 15
@@ -393,28 +398,25 @@ class TwitterData(scrapy.Spider):
 
             response = requests.get(url, headers=headers, cookies=cookies)
 
-            raw_text = response.content
+            raw_text = response.text
 
-            html_response = Selector(text=raw_text)
+            soup = BeautifulSoup(raw_text)
 
-            raw_info = html_response.xpath('//input[@class = "json-data"]/@value').extract_first()
+            results = soup.select('.stat .statnum')
 
-            if not raw_info:
+            if not results:
                 continue
             
-            full_info = json.loads(raw_info)
-            
-            info = full_info.get('profile_user')
-
-            if not info:
-                continue
+            tweets = results[0]
+            following = results[1]
+            followers = results[2]
 
             profile_details = {}
 
-            profile_details['twitter_url'] = url.replace('https://www.', 'http://')
-
-            for key in info:
-                profile_details[key] = info[key]
+            profile_details['Twitter'] = profile
+            profile_details['tweets'] = tweets.text.replace(',', '')
+            profile_details['following'] = following.text.replace(',', '')
+            profile_details['followers'] = followers.text.replace(',', '')
 
             yield profile_details
 
@@ -690,7 +692,7 @@ class SiteScraper(scrapy.Spider):
         termosScrape = self.getTermos(content)
         privacidadeScrape = self.getPrivacidade(content)
         result = mainScrape + termosScrape + privacidadeScrape
-        result = list(OrderedDict.fromkeys(result))
+        result = list(unique(result))
         if result == []:
             print("Nenhum CNPJ encontrado.")
             return ''

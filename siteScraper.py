@@ -224,7 +224,7 @@ def getInstagram(content):
 
 # Busca links para o Twitter e retorna os resultados
 def getTwitter(content):
-    ttRegex = re.compile(r"twitter\.com\/[^&?\/].*", re.IGNORECASE)
+    ttRegex = re.compile(r"twitter\.com\/[^&?\/]*", re.IGNORECASE)
     soupResults = content.find_all("a", href=ttRegex)
     result = []
     for item in soupResults:

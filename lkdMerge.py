@@ -63,7 +63,7 @@ for startup in startupList:
                     startup['Endereço'] = address
                 for location in locations:
                     if ('line1' or 'line2') in location:
-                        newLoc = enrich.lkdAdd(location, startup)
+                        newLoc = enrich.lkd_address(location, startup)
                         addresslist.append(newLoc)
 
 startupList = cleaner.clean(cleaner.clean((startupList)))

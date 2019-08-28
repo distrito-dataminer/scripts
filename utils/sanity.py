@@ -11,12 +11,12 @@ from jellyfish import levenshtein_distance as lev
 
 from utils import ddmdata, cleaner
 
-def sectlist(csvPath):
+def sector_list(csvPath):
     l = ddmdata.readcsv(csvPath)
     cleanList = [(d['Setor'],d['Categoria'],d['Subcategoria']) for d in l]
     return cleanList
 
-def catcheck(startupList, sectorList):
+def category_check(startupList, sectorList):
     print("Startups com disparidade entre número de setores, categorias e subcategorias:")
     problems = []
     for startup in startupList:
@@ -38,7 +38,7 @@ def catcheck(startupList, sectorList):
                 problemfile.write(str(item)+'\n')
         problemfile.close()
 
-def dupeDetect(startupList):
+def dupe_detect(startupList):
     dupeList = []
     for startup in startupList:
         startup['Checked'] = True
@@ -58,7 +58,7 @@ def dupeDetect(startupList):
         del dupe[-1]
     return dupeList
 
-def cemiterioCheck(startupList, cemiterio):
+def cemiterio_check(startupList, cemiterio):
     for startup in startupList:
         site = startup['Site']
         if site == '':

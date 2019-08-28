@@ -1,7 +1,7 @@
 #! python3
 # ddmdata.py - functions related to working with data
 
-import csv
+import csv, itertools
 
 # Popula um dicionário com as informações do CSV
 def readcsv(csvpath):
@@ -24,21 +24,21 @@ def writecsv(startupList, csvpath='output.csv'):
     outputWriter.writeheader()
     outputWriter.writerows(startupList)
 
-def dictFromCsv(csvpath):
+def dict_from_csv(csvpath):
     reader = csv.reader(open(csvpath, 'r', encoding = 'utf8'))
     d = dict(reader)
     return d
 
-def iDictFromCsv(csvpath):
+def idict_from_csv(csvpath):
     reader = csv.reader(open(csvpath, 'r', encoding = 'utf8'))
     d = dict(reader)
     inverted_d = dict(map(reversed, d.items()))
     return inverted_d
 
-def datacomplete(masterSL, slaveSL):
+def data_complete(masterSL, slaveSL, dictkey = 'Site'):
     for master in masterSL:
         for slave in slaveSL:
-            if master['Site'] == slave['Site']:
+            if master[dictkey] == slave[dictkey]:
                 slave['Found'] = 'YES'
                 for key in master:
                     if key in slave:

@@ -13,7 +13,8 @@ from more_itertools import unique_everseen as unique
 devkey = privatekeys.devkey
 token = privatekeys.tokenTU
 
-def createadd(endereco, startup):
+
+def create_address(endereco, startup):
     address = OrderedDict([('Startup ID', ''), ('Startup', ''), ('CNPJ', ''), ('CEP', ''),
                            ('Estado', ''), ('Cidade', ''), ('Bairro', '',),
                            ('Logradouro', ''), ('Tipo da rua',
@@ -36,7 +37,20 @@ def createadd(endereco, startup):
                              ' ' + address['Número'] + ' ' + address['Complemento']).strip()
     return address
 
-def lkdAdd(endereco, startup):
+def create_address_from_startup(startup):
+    address = OrderedDict([('Startup ID', ''), ('Startup', ''), ('CNPJ', ''), ('CEP', ''),
+                           ('Estado', ''), ('Cidade', ''), ('Bairro', '',),
+                           ('Logradouro', ''), ('Tipo da rua',
+                                                ''), ('Nome da rua', ''),
+                           ('Número', ''), ('Complemento', ''), ('End. Fiscal', '')])
+    address['Startup ID'] = startup['ID']
+    address['Startup'] = startup['Startup']
+    address['CNPJ'] = startup['CNPJ']
+    address['End. Fiscal'] = startup['Fonte']
+    address['Logradouro'] = startup['Endereço']
+    return address
+
+def lkd_address(endereco, startup):
     address = OrderedDict([('Startup ID', ''), ('Startup', ''), ('CNPJ', ''), ('CEP', ''),
                            ('Estado', ''), ('Cidade', ''), ('Bairro', '',),
                            ('Logradouro', ''), ('Tipo da rua',
@@ -67,6 +81,7 @@ def lkdAdd(endereco, startup):
     meuEnd = meuEnd.strip().strip(',').strip()
     address['Logradouro'] = meuEnd
     return address
+
 
 def enrich(startupList):
     errorlist = []
@@ -144,7 +159,7 @@ def enrich(startupList):
                     print(repr(e))
                 try:
                     for endereco in enderecos:
-                        addressList.append(createadd(endereco, startup))
+                        addressList.append(create_address(endereco, startup))
                 except Exception as e:
                     print('Erro ao adicionar endereço.')
                     print(repr(e))
@@ -153,7 +168,7 @@ def enrich(startupList):
     return startupList, errorlist, addressList
 
 
-def address(startupList):
+def get_address(startupList):
     addressList = []
     for startup in startupList:
         try:
@@ -175,7 +190,7 @@ def address(startupList):
                     print(repr(e))
                 try:
                     for endereco in enderecos:
-                        addressList.append(createadd(endereco, startup))
+                        addressList.append(create_address(endereco, startup))
                 except Exception as e:
                     print('Erro ao adicionar endereço.')
                     print(repr(e))
@@ -184,36 +199,68 @@ def address(startupList):
             print(repr(e))
     return addressList
 
-
+    
 def geocode(enderecoList):
+    newAddressList = []
     for endereco in enderecoList:
-        try:
-            if endereco['Logradouro']:
-                print('Obtendo geocode de endereço da ' + endereco['Startup'])
-                g = geocoder.google(location=(endereco['Logradouro'] + ',' + endereco['Cidade'] +
-                                              ',' + endereco['Estado'] + ',' + endereco['CEP'] + ',' + 'Brasil'), key=devkey, timeout=10, rate_limit = False)
-                endereco['Latitude'] = g.json['lat']
-                endereco['Longitude'] = g.json['lng']
-        except Exception as e:
-            print('Erro: ' + repr(e))
-    return enderecoList
-
-def geocodeind(endereco):
-    try:
-        if 'Latitude' and 'Longitude' in endereco:
-            if endereco['Latitude'] and endereco['Longitude']:
-                print('Endereço da {} já tinha geocode.'.format(endereco['Startup']))
-                return endereco
+        keyList = ['ID', 'Startup ID', 'Startup', 'CNPJ', 'End. Fiscal', 'Confiança', 'Endereço', 'País',
+                   'Estado', 'Cidade', 'Bairro', 'Rua', 'Número', 'Latitude', 'Longitude', 'CEP', 'Endereço original']
+        newAddress = {}
+        for key in keyList:
+            newAddress[key] = ''
+        carryOver = ['Startup ID', 'Startup', 'CNPJ', 'End. Fiscal']
+        for key in carryOver:
+            newAddress[key] = endereco[key]
+        newAddress['Endereço original'] = endereco['Logradouro']
+        print('Obtendo geocode de endereço da ' + endereco['Startup'])
         if endereco['Logradouro']:
-            print('Obtendo geocode de endereço da ' + endereco['Startup'])
+            try:
+                g = geocoder.google(location=(endereco['Logradouro'] + ',' + endereco['Cidade'] +
+                ',' + endereco['Estado'] + ',' + endereco['CEP']), key=devkey, timeout=10, rate_limit=False)
+                newAddress['Latitude'] = g.lat
+                newAddress['Longitude'] = g.lng
+                newAddress['Confiança'] = g.confidence
+                newAddress['País'] = g.country
+                newAddress['Cidade'] = g.county 
+                newAddress['Número'] = g.housenumber
+                newAddress['Endereço'] = g.address
+                newAddress['CEP'] = g.postal
+                newAddress['Estado'] = g.state
+                newAddress['Rua'] = g.street
+                newAddress['Bairro'] = g.sublocality
+                newAddressList.append(newAddress)
+            except Exception as e:
+                print(repr(e))
+                continue
+    return newAddressList
+
+def geocode_individual(endereco):
+    keyList = ['ID', 'Startup ID', 'Startup', 'CNPJ', 'End. Fiscal', 'Confiança', 'Endereço', 'País',
+                   'Estado', 'Cidade', 'Bairro', 'Rua', 'Número', 'Latitude', 'Longitude', 'CEP', 'Endereço original']
+    newAddress = {}
+    for key in keyList:
+        newAddress[key] = ''
+    carryOver = ['Startup ID', 'Startup', 'CNPJ', 'End. Fiscal']
+    for key in carryOver:
+        newAddress[key] = endereco[key]
+    newAddress['Endereço original'] = endereco['Logradouro']
+    print('Obtendo geocode de endereço da ' + endereco['Startup'])
+    if endereco['Logradouro']:
+        try:
             g = geocoder.google(location=(endereco['Logradouro'] + ',' + endereco['Cidade'] +
-                                            ',' + endereco['Estado'] + ',' + endereco['CEP'] + ',' + 'Brasil'), key=devkey, timeout=10, rate_limit = False)
-            endereco['Latitude'] = g.json['lat']
-            endereco['Longitude'] = g.json['lng']
-            print((endereco['Latitude'],endereco['Longitude']))
-            sleep(1)
-            return endereco
-    except Exception as e:
-        print('Erro: ' + repr(e))
-        return endereco
-    return endereco
+            ',' + endereco['Estado'] + ',' + endereco['CEP']), key=devkey, timeout=10, rate_limit=False)
+            newAddress['Latitude'] = g.lat
+            newAddress['Longitude'] = g.lng
+            newAddress['Confiança'] = g.confidence
+            newAddress['País'] = g.country
+            newAddress['Cidade'] = g.county 
+            newAddress['Número'] = g.housenumber
+            newAddress['Endereço'] = g.address
+            newAddress['CEP'] = g.postal
+            newAddress['Estado'] = g.state
+            newAddress['Rua'] = g.street
+            newAddress['Bairro'] = g.sublocality
+            return newAddress
+        except Exception as e:
+            print(repr(e))
+            return None

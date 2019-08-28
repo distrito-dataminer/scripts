@@ -16,7 +16,7 @@ slaveSL = ddmdata.readcsv(sys.argv[2])
 
 noAdd = False
 
-if len(sys.argv) > 3:
+if len(sys.argv) == 4:
     if sys.argv[3] == 'noadd':
         noAdd = True
 
@@ -33,7 +33,7 @@ outputWriter.writeheader()
 
 for master in masterSL:
     for slave in slaveSL:
-        if master['Site'] == slave['Site']:
+        if master['Startup'].lower() == slave['Startup'].lower():
             slave['Found'] = 'YES'
             for key in master:
                 if key in slave:

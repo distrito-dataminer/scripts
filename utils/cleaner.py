@@ -5,9 +5,9 @@ import sys
 import csv
 import re
 import pprint
+from pycpfcnpj import cnpj as pycnpj
 from datetime import datetime, timedelta
 from more_itertools import unique_everseen as unique
-from utils import validate
 from collections import OrderedDict
 from unidecode import unidecode
 from utils import datasets
@@ -30,7 +30,7 @@ def clean(startupList):
                     newCnpj = newCnpj.zfill(14)
                     if newCnpj == '00000000000000':
                         continue
-                    if validate.isCnpjValid(newCnpj):
+                    if pycnpj.validate(newCnpj):
                         newCnpj = "{}.{}.{}/{}-{}".format(
                             newCnpj[:2], newCnpj[2:5], newCnpj[5:8], newCnpj[8:12], newCnpj[12:14])
                         newCnpjList.append(newCnpj)
@@ -281,7 +281,7 @@ def score(startupList):
         if startup['Faturamento Presumido']:
             score += 4
         # TODO: Outros dados TU - Score 2
-        if startup['E-mail']:
+        if 'E-mail' in startup and startup['E-mail']:
             score += 2
         if startup['Telefone'] and startup['Endereço']:
             score += 1
@@ -302,7 +302,7 @@ def score(startupList):
     return startupList
 
 
-def cleanEndereco(enderecolist):
+def clean_endereco(enderecolist):
 
     for endereco in enderecolist:
         if len(endereco['CEP']) == 8:

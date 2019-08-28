@@ -3,8 +3,8 @@ from utils import privatekeys, ddmdata
 from mysql.connector import Error
 from datetime import datetime
 
-def connect():
 
+def connect():
     try:
         conn = mysql.connector.connect(host='homolog-distrito.cpwrmibgkvby.sa-east-1.rds.amazonaws.com',
                                        database='distrito_test',
@@ -18,7 +18,8 @@ def connect():
     except Error as e:
         print(repr(e))
 
-def foQuery(query):
+
+def fo_query(query):
     try:
         conn = connect()
         cursor = conn.cursor()
@@ -37,7 +38,8 @@ def foQuery(query):
         cursor.close()
         conn.close()
 
-def insertCsv(csvpath, tablename):
+
+def insert_csv(csvpath, tablename):
     entries = ddmdata.readcsv(csvpath)
     conn = connect()
     try:
@@ -65,7 +67,8 @@ def insertCsv(csvpath, tablename):
     finally:
         conn.close()
 
-def insertCsvDateless(csvpath, tablename):
+
+def insert_csv_dateless(csvpath, tablename):
     entries = ddmdata.readcsv(csvpath)
     conn = connect()
     try:

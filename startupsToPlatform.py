@@ -1,15 +1,15 @@
 from utils import ddmdata, ddmsql, cleaner, sanity
 from collections import OrderedDict
 
-category_sub_category = ddmdata.iDictFromCsv(
+category_sub_category = ddmdata.idict_from_csv(
     'tables\\category_sub_category.csv')
-category = ddmdata.iDictFromCsv('tables\\category.csv')
-customer_target = ddmdata.iDictFromCsv('tables\\customer_target.csv')
-legal_constituition = ddmdata.iDictFromCsv('tables\\legal_constituition.csv')
-sector_category = ddmdata.iDictFromCsv('tables\\sector_category.csv')
-sector = ddmdata.iDictFromCsv('tables\\sector.csv')
-startup_stage = ddmdata.iDictFromCsv('tables\\startup_stage.csv')
-sub_category = ddmdata.iDictFromCsv('tables\\sub_category.csv')
+category = ddmdata.idict_from_csv('tables\\category.csv')
+customer_target = ddmdata.idict_from_csv('tables\\customer_target.csv')
+legal_constituition = ddmdata.idict_from_csv('tables\\legal_constituition.csv')
+sector_category = ddmdata.idict_from_csv('tables\\sector_category.csv')
+sector = ddmdata.idict_from_csv('tables\\sector.csv')
+startup_stage = ddmdata.idict_from_csv('tables\\startup_stage.csv')
+sub_category = ddmdata.idict_from_csv('tables\\sub_category.csv')
 
 startupList = ddmdata.readcsv('base.csv')
 
