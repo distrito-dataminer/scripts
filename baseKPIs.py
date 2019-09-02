@@ -1,7 +1,7 @@
 from utils import ddmdata, cleaner
 import os, sys
 
-_,mypath = sys.argv
+mypath = sys.argv[1]
 
 kpiList = []
 

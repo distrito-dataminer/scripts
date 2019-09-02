@@ -7,7 +7,6 @@ from collections import OrderedDict
 
 from more_itertools import unique_everseen as unique
 from unidecode import unidecode
-from jellyfish import levenshtein_distance as lev 
 
 from utils import ddmdata, cleaner
 
