@@ -11,6 +11,7 @@ from more_itertools import unique_everseen as unique
 from collections import OrderedDict
 from unidecode import unidecode
 from utils import datasets
+import itertools
 
 def clean(startupList):
 
@@ -72,7 +73,7 @@ def clean(startupList):
                         lkd = "http://" + mo.group().lower().strip()
                         newLkdList.append(lkd)
                     else:
-                        if 'twitter' in lkd:
+                        if 'twitter' in lkd and 'Twitter' in startup:
                             startup['Twitter'] += ',' + lkd
                         print('Removendo LKD inválido: {}'.format(lkd))
                 startup['LinkedIn'] = ','.join(list(unique(newLkdList)))
@@ -289,7 +290,7 @@ def score(startupList):
             score += 2
         if startup['Modelo de negócio']:
             score += 3
-        if startup['Logo Estudo']:
+        if startup['Logo'] == 'TRUE':
             score += 4
         if startup['Acelerada por'] or startup['Investida por'] or startup['Incubada por'] or startup['Hub de inovação']:
             score += 5
@@ -316,3 +317,82 @@ def clean_endereco(enderecolist):
                 enderecolist.remove(endereco2)
 
     return enderecolist
+
+def dedupe(startup_list):
+    
+    startup_list = clean(startup_list)
+    startup_list = score(startup_list)
+
+    dupes_list = []
+
+    for startup in startup_list:
+        dupe_list = [startup]
+        startup['Dedupe check'] = True
+        clean_name = unidecode(startup['Startup'].lower().replace(' ', ''))
+        clean_site = startup['Site'].replace('http://', '')
+        for startup2 in startup_list:
+            if 'Dedupe check' in startup2 and startup2['Dedupe check'] == True:
+                continue
+            clean_site2 = startup2['Site'].replace('http://', '')
+            if clean_site != '' and clean_site2 != '':
+                if clean_site == clean_site2 or clean_site in clean_site2 or clean_site2 in clean_site:
+                    print('Site match! {} and {}'.format(startup['Site'], startup2['Site']))
+                    dupe_list.append(startup2)
+                    continue
+            clean_name2 = unidecode(startup2['Startup'].lower().replace(' ', ''))
+            if clean_name != '' and clean_name2 != '':
+                if clean_name == clean_name2:
+                    print('Name match! {} and {}'.format(startup['Startup'], startup2['Startup']))
+                    dupe_list.append(startup2)
+                    continue
+            if startup['LinkedIn'] and startup['LinkedIn'] == startup2['LinkedIn']:
+                print('LinkedIn match! {} and {}'.format(startup['LinkedIn'], startup2['LinkedIn']))
+                dupe_list.append(startup2)
+                continue
+        if len(dupe_list) > 1:
+            dupes_list.append(dupe_list)
+
+    for dupe_list in dupes_list:
+        new_startup = {}
+        all_tags = []
+        all_setor = []
+        all_cat = []
+        all_sub = []
+        all_email = []
+        max_ndp = 0
+        for dupe in dupe_list:
+            if dupe['NDP'] == '':
+                ndp = 1
+            else:
+                ndp = int(dupe['NDP'])
+            if ndp >= max_ndp:
+                main_startup = dupe
+        for key in main_startup:
+            new_startup[key] = main_startup[key]
+        for dupe in dupe_list:
+            for key in startup:
+                if dupe[key]:
+                    if new_startup[key] == '' and dupe[key] != '':
+                        new_startup[key] = dupe[key]
+            if dupe['Descrição'] not in new_startup['Descrição']:
+                new_startup['Descrição'] = '\n\n' + dupe['Descrição']
+            all_tags += dupe['Tags'].split(',')
+            all_setor += dupe['Setor'].split(',')
+            all_cat += dupe['Categoria'].split(',')
+            all_sub += dupe['Subcategoria'].split(',')
+            all_email += dupe['E-mail'].split(',')
+        new_startup['Tags'] = ','.join(list(unique(all_tags)))
+        new_startup['Setor'] = ','.join(list(unique(all_setor)))
+        new_startup['Categoria'] = ','.join(list(unique(all_cat)))
+        new_startup['Subcategoria'] = ','.join(list(unique(all_sub)))
+        new_startup['E-mail'] = ','.join(list(unique(all_email)))
+        for index, startup in enumerate(startup_list):
+            if startup == main_startup:
+                startup_list[index] = new_startup
+            elif startup in dupe_list and startup['Tirar?'] == '':
+                startup['Tirar?'] = 'Duplicata'
+
+    return startup_list
+
+        
+

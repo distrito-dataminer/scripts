@@ -1,9 +1,16 @@
 #! python3
 # ddmdata.py - functions related to working with data
 
-import csv, itertools
+import csv
+import itertools
+import ast
+from . import enrich
+from more_itertools import unique_everseen as unique
+from collections import OrderedDict
 
 # Popula um dicionário com as informações do CSV
+
+
 def readcsv(csvpath):
     startupList = []
     with open(csvpath, encoding="utf8") as fh:
@@ -12,6 +19,7 @@ def readcsv(csvpath):
             startupList.append(row)
         fh.close()
     return startupList
+
 
 def writecsv(startupList, csvpath='output.csv'):
     all_keys = []
@@ -24,26 +32,203 @@ def writecsv(startupList, csvpath='output.csv'):
     outputWriter.writeheader()
     outputWriter.writerows(startupList)
 
+
 def dict_from_csv(csvpath):
-    reader = csv.reader(open(csvpath, 'r', encoding = 'utf8'))
+    reader = csv.reader(open(csvpath, 'r', encoding='utf8'))
     d = dict(reader)
     return d
 
+
 def idict_from_csv(csvpath):
-    reader = csv.reader(open(csvpath, 'r', encoding = 'utf8'))
+    reader = csv.reader(open(csvpath, 'r', encoding='utf8'))
     d = dict(reader)
     inverted_d = dict(map(reversed, d.items()))
     return inverted_d
 
-def data_complete(masterSL, slaveSL, dictkey = 'Site'):
-    for master in masterSL:
-        for slave in slaveSL:
-            if master[dictkey] == slave[dictkey]:
+
+def data_complete(master_list, slave_list, dictkey='Site', no_add=True):
+    
+    for master in master_list:
+        clean_master_key = master[dictkey].replace('http://', '').lower()
+        if clean_master_key == '':
+            continue
+        for slave in slave_list:
+            clean_slave_key = slave[dictkey].replace('http://', '').lower()
+            if clean_slave_key == '':
+                continue
+            if clean_master_key == clean_slave_key or clean_master_key in clean_slave_key or clean_slave_key in clean_master_key:
                 slave['Found'] = 'YES'
                 for key in master:
                     if key in slave:
                         if slave[key] != "":
                             if master[key] == "":
                                 master[key] = slave[key]
-                                print("Completando {} da {} com valor {}".format(key.upper(), master["Startup"].upper(), slave[key]))
-    return masterSL
+                                print("Completando {} da {} com valor {}".format(
+                                    key.upper(), master["Startup"].upper(), slave[key]))
+
+            if no_add == False:
+                new_startups = []
+                print("\nAs startups a seguir não foram encontradas na base e estão sendo adicionadas:\n")
+                for slave in slave_list:
+                    if 'Found' not in slave:
+                        print(slave['Startup'])
+                        new_startups.append(slave)
+
+                for startup in new_startups:
+                    clean_startup = OrderedDict()
+                    for key in master_list[0]:
+                        clean_startup[key] = ""
+                    for key in startup:
+                        if key in clean_startup:
+                            clean_startup[key] = startup[key]
+                    master_list.append(clean_startup)
+
+    return master_list
+
+
+def lkd_merge(startup_list, lkd_list):
+    address_list = []
+    for startup in startup_list:
+        for lkd in lkd_list:
+            if startup['LinkedIn'] == lkd['url'].replace("https://www.", "http://"):
+                if lkd['logo'] != '':
+                    startup['Logo LKD'] = lkd['logo']
+                if lkd['follower_count'] != '':
+                    startup['Seguidores LKD'] = lkd['follower_count']
+                if lkd['description'] != '':
+                    if 'Descrição' in startup:
+                        if lkd['description'] not in startup['Descrição']:
+                            startup['Descrição'] += '\n\n' + lkd['description']
+                    else:
+                        startup['Descrição'] = lkd['description']
+                if lkd['name'] != '':
+                    startup['Nome LKD'] = lkd['name']
+                if lkd['company_size'] != '':
+                    startup['Faixa # de funcionários'] = lkd['company_size']
+                if lkd['founded_year'] != '':
+                    startup['Ano de fundação'] = lkd['founded_year']
+                if lkd['cover_image'] != '':
+                    startup['Foto de capa'] = lkd['cover_image']
+                if 'Cidade' not in startup or lkd['city'] != '' and startup['Cidade']:
+                    startup['Cidade'] = lkd['city']
+                if 'Estado' not in startup or lkd['state'] != '' and startup['Estado'] == '':
+                    startup['Estado'] = lkd['state']
+                if 'País' not in startup or lkd['country'] != '' and startup['País'] == '':
+                    startup['País'] = lkd['country']
+                if lkd['number_of_self_declared_employees'] != '':
+                    startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']
+                if lkd['tags'] != '':
+                    lkdtags = ast.literal_eval(lkd['tags'])
+                    if 'Tags' in startup:
+                        oldtags = startup['Tags'].split(',')
+                        newtags = unique(lkdtags + oldtags)
+                        startup['Tags'] = ','.join(newtags)
+                    else:
+                        startup['Tags'] = ','.join(lkdtags)
+                if lkd['confirmed_locations']:
+                    locations = ast.literal_eval(lkd['confirmed_locations'])
+                    if 'line1' in locations[0]:
+                        keysArray = ['line1', 'line2', 'city',
+                                     'geographicArea', 'postalCode']
+                        addlines = [locations[0][x]
+                                    for x in keysArray if x in locations[0]]
+                        address = ''
+                        for i in range(len(addlines)):
+                            address += ', ' + addlines[i]
+                        address = address.strip().strip(',').strip()
+                        startup['Endereço'] = address
+                    for location in locations:
+                        if ('line1' or 'line2') in location:
+                            newLoc = enrich.lkd_address(location, startup)
+                            address_list.append(newLoc)
+    return startup_list, address_list
+
+
+def startups_from_lkd(lkd_list):
+    startup_list = []
+    for lkd_info in lkd_list:
+        if lkd_info['name'] and lkd_info['url'] and lkd_info['website']:
+            startup = {'Fonte': 'LinkedIn'}
+            startup['Startup'] = lkd_info['name']
+            startup['LinkedIn'] = lkd_info['url']
+            startup['Site'] = lkd_info['website']
+            startup_list.append(startup)
+    startup_list, address_list = lkd_merge(startup_list, lkd_list)
+    return startup_list, address_list
+
+
+def startups_from_crunchbase(cb_list):
+    startup_list = []
+    cb_dict = {
+        'Organization Name': 'Startup',
+        'Website': 'Site',
+        'LinkedIn': 'LinkedIn',
+        'Organization Name URL': 'Crunchbase',
+    }
+    for cb_info in cb_list:
+        startup = {'Fonte': 'Crunchbase'}
+        for key, value in cb_dict.items():
+            if key in cb_info:
+                startup[value] = cb_info[key]
+        location = [cb.strip()
+                    for cb in cb_info['Headquarters Location'].split(',')]
+        if len(location) == 3:
+            startup['Cidade'], startup['Estado'], startup['País'] = location
+        if cb_info['Founded Date']:
+            startup['Ano de fundação'] = cb_info['Founded Date'][0:4]
+        startup_list.append(startup)
+    return startup_list
+
+
+def startups_from_startupbase(sb_list):
+    startup_list = []
+    null_list = ['S/N', 'null']
+
+    sb_dict = {
+        'Nome': 'Startup',
+        'site-href': 'Site',
+        'linkedin': 'LinkedIn',
+        'ano': 'Ano de fundação',
+        'publico': 'Público',
+        'modelo': 'Modelo de negócio',
+        'momento': 'Estágio da operação',
+        'tamanho': 'Porte SB',
+        'facebook': 'Facebook',
+        'descricao': 'Descrição',
+        'twitter': 'Twitter',
+        'instagram': 'Instagram',
+        'crunchbase': 'Crunchbase',
+        'link-href': 'StartupBase',
+        'update': 'Última atualização SB',
+        'verified': 'Verified SB',
+        'Setor': 'Setor SB',
+    }
+
+    for sb_info in sb_list:
+        
+        startup = {'Fonte': 'StartupBase'}
+
+        for key, value in sb_dict.items():
+            if key in sb_info:
+                if sb_info[key] in null_list:
+                    startup[value] = ''
+                else:
+                    startup[value] = sb_info[key]
+
+        if sb_info['Local']:
+            location = [sb.strip() for sb in sb_info['Local'].split('-')]
+            if len(location) == 2:
+                startup['Cidade'], startup['Estado'] = location
+
+        if sb_info['tags']:
+            tag_list = eval(sb_info['tags'])
+            final_tag_list = []
+            for tag in tag_list:
+                if 'tags' in tag:
+                    final_tag_list.append(tag['tags'])
+            startup['Tags'] = ','.join(final_tag_list)
+
+        startup_list.append(startup)
+
+    return startup_list
+

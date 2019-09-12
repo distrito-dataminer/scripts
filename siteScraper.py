@@ -44,14 +44,11 @@ outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
 outputWriter.writeheader()
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
-    'If-Modified-Since': 'Mon, 08 Jul 2019 18:10:47 GMT',
-    'If-None-Match': '5f879487d25a59f2e5f968f7b6bd5799',
-    'Cache-Control': 'max-age=0',
 }
 
 # Requisita o site da startup e faz download dele usando o Requests
@@ -261,7 +258,7 @@ def getCrunchbase(content):
     return result
 
 def scrapeEmail(content):
-    emailRegex = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
+    emailRegex = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-z]+)")
     results = emailRegex.findall(content.text)
     for item in results:
         mo = emailRegex.search(item)

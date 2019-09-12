@@ -2,97 +2,120 @@
 # dataSearch.py - searches for startups containing terms in their tags or description.
 
 import sys
+import re
 from utils import ddmdata
 from more_itertools import unique_everseen as unique
-from pprint import pprint
+from pprint import pprint, pformat
 from collections import OrderedDict
+from unidecode import unidecode
 
-startupList = ddmdata.readcsv(sys.argv[1])
+startup_list = ddmdata.readcsv(sys.argv[1])
+full_output = False
 
-if len(sys.argv) == 3:
-    searchTerms = []
-    searchTermsCsv = ddmdata.readcsv(sys.argv[2])
-    for item in searchTermsCsv:
-        searchTerms.append(item['Tags'])
+if len(sys.argv) >= 3:
+    search_items = ddmdata.readcsv(sys.argv[2])
 else:
-    searchTerms = ['Big Data', 'Analytics']
+    search_items = [{'Número': '1',
+                     'Demanda': 'Santa Catarina',
+                     'Tags': 'Florianópolis, Joinville, Blumenau, Chapecó, Itajaí, Criciúma, Jaraguá do Sul, Palhoça, Lages, Camboriú, Brusque, Tubarão, São Bento do Sul, Navegantes'}]
 
-tagMatches = []
-descriptionMatches = []
-tndMatches = []
-categoryMatches = []
-setorMatches = []
+if len(sys.argv) >=4 and sys.argv[3] == 'fullout':
+    full_output = True
 
-tagDict = {}
-descDict = {}
-catDict = {}
 
-for term in searchTerms:
-    tagDict[term.lower()] = 0
-    descDict[term.lower()] = 0
-    catDict[term.lower()] = 0
+for item in search_items:
 
-for startup in startupList:
-    if startup['Tirar?'] != '':
-        continue
-    matchCount = 0
-    for term in searchTerms:
-        if term.lower() in startup['Tags'].lower():
-            tagMatches.append(startup)
-            tagDict[term.lower()] += 1
-            matchCount += 1
-        if term.lower() in startup['Descrição'].lower():
-            descriptionMatches.append(startup)
-            descDict[term.lower()] += 1
-            matchCount += 1
-        if term.lower() in startup['Categoria'].lower() or term.lower() in startup['Subcategoria'].lower():
-            categoryMatches.append(startup)
-            catDict[term.lower()] += 1
-            matchCount += 1
-        if term.lower() in startup['Setor'].lower():
-            setorMatches.append(startup)
-            matchCount += 1
-    startup['Match Count'] = matchCount
+    print('\nRunning search for {} - {}'.format(item['Número'], item['Demanda']))
+    print('Tags: {}\n'.format(item['Tags']))
 
-for match in tagMatches:
-    if match in descriptionMatches:
-        tndMatches.append(match)
+    tag_matches = []
+    description_matches = []
+    tnd_matches = []
+    category_matches = []
+    sector_matches = []
 
-tagMatches = list(unique(tagMatches))
-descriptionMatches = list(unique(descriptionMatches))
-tndMatches = list(unique(tndMatches))
-categoryMatches = list(unique(categoryMatches))
-setorMatches = list(unique(setorMatches))
-mainMatches = list(unique(setorMatches + categoryMatches + tndMatches))
-allMatches = list(unique(tagMatches + descriptionMatches + categoryMatches + setorMatches))
+    tag_dict = {}
+    desc_dict = {}
+    cat_dict = {}
 
-print('\n\nTag matches:')
-print(len(tagMatches))
-print('\n\nDescription matches:')
-print(len(descriptionMatches))
-print('\n\nTag and Description matches:')
-print(len(tndMatches))
-print('\n\nCategory matches:')
-print(len(categoryMatches))
-print('\n\nAll matches:')
-print(len(allMatches))
+    search_terms = item['Tags'].split(',')
 
-tagDict = sorted(tagDict.items(), key=lambda kv: kv[1], reverse=True)
-descDict = sorted(descDict.items(), key=lambda kv: kv[1], reverse=True)
-catDict = sorted(catDict.items(), key=lambda kv: kv[1], reverse=True)
+    search_terms = [unidecode(term.lower().strip()) for term in search_terms]
 
-print('\n\nTag frequency:')
-pprint(tagDict)
-print('\n\nDescription frequency:')
-pprint(descDict)
-print('\n\nCategory frequency:')
-pprint(catDict)
-    
-ddmdata.writecsv(tagMatches, 'Matches_Tags.csv')
-ddmdata.writecsv(descriptionMatches, 'Matches_Descrição.csv')
-ddmdata.writecsv(tndMatches, 'Matches_Tags&Descrição.csv')
-ddmdata.writecsv(categoryMatches, 'Matches_Categoria.csv')
-ddmdata.writecsv(setorMatches, 'Matches_Setor.csv')
-ddmdata.writecsv(mainMatches, 'Matches_Main.csv')
-ddmdata.writecsv(allMatches, 'Matches_All.csv')
+    for term in search_terms:
+        tag_dict[term] = 0
+        desc_dict[term] = 0
+        cat_dict[term] = 0
 
+    for startup in startup_list:
+        if startup['Tirar?'] != '':
+            continue
+        match_count = 0
+        matched_in = []
+        for term in search_terms:
+            term_pattern = re.compile('\\b{}\\b'.format(term), re.IGNORECASE)
+            if re.search(term_pattern, unidecode(startup['Tags'])):
+                tag_matches.append(startup)
+                tag_dict[term] += 1
+                match_count += 1
+                matched_in.append('Tags')
+            if re.search(term_pattern, unidecode(startup['Descrição'])):
+                description_matches.append(startup)
+                desc_dict[term] += 1
+                match_count += 1
+                matched_in.append('Descrição')
+            if re.search(term_pattern, unidecode(startup['Categoria'])) or re.search(term_pattern, unidecode(startup['Subcategoria'])):
+                category_matches.append(startup)
+                cat_dict[term] += 1
+                match_count += 1
+                matched_in.append('Categoria')
+        startup['Match Count'] = match_count
+        startup['Matched in'] = ','.join(list(unique(matched_in)))
+
+    tnd_matches = [match for match in tag_matches if match in description_matches]
+
+    # Makes sure there are no repeated elements in each list
+    tag_matches = list(unique(tag_matches))
+    description_matches = list(unique(description_matches))
+    tnd_matches = list(unique(tnd_matches))
+    category_matches = list(unique(category_matches))
+    main_matches = list(unique(sector_matches + category_matches + tnd_matches))
+    all_matches = list(unique(main_matches + tag_matches + description_matches))
+
+    # Sorts dictionaries by number of matches, descending
+    tag_dict = sorted(tag_dict.items(), key=lambda kv: kv[1], reverse=True)
+    desc_dict = sorted(desc_dict.items(), key=lambda kv: kv[1], reverse=True)
+    cat_dict = sorted(cat_dict.items(), key=lambda kv: kv[1], reverse=True)
+
+    # Outputs match stats to a file
+    with open('0_Match_Stats.txt', 'a+', encoding='utf8') as f:
+        f.write('\n\n---------------------------------------------------------------')
+        f.write('\nSTATS FOR {} - {}\n'.format(item['Número'], item['Demanda']))
+        f.write('\nTag matches: {}'.format(len(tag_matches)))
+        f.write('\nDescription matches: {}'.format(len(description_matches)))
+        f.write('\nTag and Description matches: {}'.format(len(tnd_matches)))
+        f.write('\nCategory matches: {}'.format(len(category_matches)))
+        f.write('\nAll matches: {}'.format(len(all_matches)))
+        f.write('\n\nTag frequency:\n')
+        f.write(pformat(tag_dict))
+        f.write('\n\nDescription frequency:\n')
+        f.write(pformat(desc_dict))
+        f.write('\n\nCategory frequency:\n')
+        f.write(pformat(cat_dict))
+        f.write('\n---------------------------------------------------------------\n\n')
+
+    if full_output:
+        if tag_matches:
+            ddmdata.writecsv(tag_matches, '{}_{}_Matches_Tags.csv'.format(item['Número'], item['Demanda']))
+        if description_matches:
+            ddmdata.writecsv(description_matches, '{}_{}_Matches_Descrição.csv'.format(item['Número'], item['Demanda']))
+        if tnd_matches:
+            ddmdata.writecsv(tnd_matches, '{}_{}_Matches_Tags&Descrição.csv'.format(item['Número'], item['Demanda']))
+        if category_matches:
+            ddmdata.writecsv(category_matches, '{}_{}_Matches_Categoria.csv'.format(item['Número'], item['Demanda']))
+        if main_matches:
+            ddmdata.writecsv(main_matches, '{}_{}_Matches_Main.csv'.format(item['Número'], item['Demanda']))
+    if all_matches:
+        ddmdata.writecsv(all_matches, '{}_{}_Matches_All.csv'.format(item['Número'], item['Demanda']))
+
+print('Task completed successfully.')

@@ -14,22 +14,22 @@ from utils import cleaner, enrich, ddmdata
 from utils.privatekeys import tokenTU as token
 
 # Popula um dicionário com as informações do CSV
-startupList = ddmdata.readcsv(sys.argv[1])
+startup_list = ddmdata.readcsv(sys.argv[1])
 
 # Limpa os dados, roda o enriquecimento e limpa os dados novamente
-startupList = cleaner.clean(startupList)
-startupList, errorList, enderecoList = enrich.enrich(startupList)
-startupList = cleaner.clean(startupList)
+startup_list = cleaner.clean(startup_list)
+startup_list, error_list, endereco_list = enrich.enrich(startup_list)
+startup_list = cleaner.clean(startup_list)
 
 # Cria um CSV com as colunas relevantes para servir de output e escreve os dados limpos
 filename = (sys.argv[1].replace('.csv', '') + '_enriquecida.csv')
-ddmdata.writecsv(startupList, filename)
+ddmdata.writecsv(startup_list, filename)
 
 filename = (sys.argv[1].replace('.csv', '') + '_endereços.csv')
-ddmdata.writecsv(enderecoList, filename)
+ddmdata.writecsv(endereco_list, filename)
 
 # Cria um CSV com as startups que deram erro, caso existam
-if len(errorList) > 0:
+if len(error_list) > 0:
     filename = '{}_errors.csv'.format(sys.argv[1].replace('.csv', ''))
-    ddmdata.writecsv(errorList, filename)
-    print('De {} startups, {} apresentaram erro e estão em {}'.format(len(startupList), len(errorList), filename))
+    ddmdata.writecsv(error_list, filename)
+    print('De {} startups, {} apresentaram erro e estão em {}'.format(len(startup_list), len(error_list), filename))

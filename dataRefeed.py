@@ -7,13 +7,13 @@ import re, sys
 
 base = ddmdata.readcsv(sys.argv[1])
 estudo = ddmdata.readcsv(sys.argv[2])
+estudoName = sys.argv[3]
 
 base = cleaner.clean(base)
 estudo = cleaner.clean(estudo)
 
 #Parâmetros - altere conforme necessário
-estudoName = "HealthTech"
-ignoreFields = ['ID', 'ID Estudo', 'Tirar da base?', 'Remover do estudo?', 'Por que tirar?', 'Verificada', 'Logo', 'Leads Abbott']
+ignoreFields = ['ID', 'ID Estudo', 'Tirar da base?', 'Remover do estudo?', 'Por que tirar?', 'Verificada', 'Logo', 'Leads Abbott', 'Check', 'Match Count']
 addFields = ['Setor', 'E-mail', 'Tags', 'Categoria', 'Subcategoria']
 
 def checkID(base, estudo):
@@ -35,14 +35,17 @@ def checkID(base, estudo):
                 print("\nIgualando por nome:")
                 print(estudada['Startup'] + " --- " + estudada['Site'] + " --- " + estudada['LinkedIn'])
                 print(startup['Startup'] + " --- " + startup['Site'] + " --- " + startup['LinkedIn'])
+                startup['Site'] = estudada['Site']
                 estudada['ID'] = startup['ID']
     return base, estudo
 
 def updateStartup(estudada, startup):
-    startup['Checado'] = estudoName
     if estudada['Tirar da base?'] == 'TRUE':
         startup['Tirar?'] = estudada['Por que tirar?']
+        startup['Checado'] = estudoName
         return startup
+    if estudada['Remover do estudo?'] == 'FALSE':
+        startup['Checado'] = estudoName
     for key in estudada:
         if key not in ignoreFields and key not in addFields:
             if estudada['Remover do estudo?'] == 'TRUE':
@@ -85,6 +88,7 @@ for estudada in estudo:
             lastID += 1
             newStartup = {}
             newStartup['ID'] = lastID
+            estudada['ID'] = lastID
             if estudada['Remover do estudo?'] == 'FALSE':
                 newStartup['Checado'] = estudoName
             for key in estudada:
