@@ -8,6 +8,7 @@ import sys, csv, webbrowser, bs4, requests, re, shutil, datetime
 from collections import OrderedDict
 from utils import cleaner, ddmdata, sanity
 from more_itertools import unique_everseen as unique
+import zlib
 
 # Desativa a exigência de certificado HTTPS ao pegar as informações
 import urllib3
@@ -15,7 +16,7 @@ urllib3.disable_warnings()
 
 # Usa o arquivo determinado pelo primeiro argumento como fonte dos sites e nomes
 csvFile = sys.argv[1]
-noReplace = False
+noReplace = True
 if len(sys.argv) > 2:
     if sys.argv[2] == "noreplace":
         noReplace = True
@@ -31,7 +32,7 @@ if len(sys.argv) > 3:
 startupList = ddmdata.readcsv(sys.argv[1])
 
 # Adiciona as informações coletadas como colunas caso elas já não existam
-scraperKeys = ['ID', 'Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response', 'E-mail']
+scraperKeys = ['ID', 'Startup', 'Site', 'CNPJ', 'LinkedIn', 'Facebook', 'Instagram', 'Twitter', 'Crunchbase', 'Response', 'E-mail', 'Site final', 'Site checksum']
 for key in scraperKeys:
     for startup in startupList:
         if key not in startup:
@@ -44,7 +45,7 @@ outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
 outputWriter.writeheader()
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
     'Connection': 'keep-alive',
@@ -64,7 +65,7 @@ def getSite(site):
             res = requests.get(site, verify=False, timeout=(2, 15))
         except:
             print('Erro mesmo com WWW. Enviando erro original.')
-            return 'ERRO', repr(e)
+            return 'ERRO', repr(e), ''
     if res.status_code != 200:
         try:
             if 'http://www.' not in site:
@@ -73,13 +74,14 @@ def getSite(site):
                 res2 = requests.get(site, verify=False, timeout=(2, 15))
                 if res2.status_code == 200:
                     soup = bs4.BeautifulSoup(res2.text, features="lxml")
-                    return soup, res2.status_code
+                    return soup, res2.status_code, res.url
                 else:
                     print('Adicionar o WWW não resolveu. Prosseguindo com status code original.')
         except:
             print('Erro ao adicionar WWW. Prosseguindo com status code ruim.')
     soup = bs4.BeautifulSoup(res.text, features="lxml")
-    return soup, res.status_code
+    if res.url:
+        return soup, res.status_code, res.url
 
 # Busca números no formato de CNPJ no site e retorna os resultados
 def scrapeCnpj(content):
@@ -96,7 +98,7 @@ def getTermos(content):
     termosResults = content.find_all("a", href=True, title=termosRegex)
     results = []
     for item in termosResults:
-        site, response = getSite(item['href'])
+        site, response, _ = getSite(item['href'])
         if response != 200:
             continue
         result = scrapeCnpj(site)
@@ -109,7 +111,7 @@ def getPrivacidade(content):
     privacidadeResults = content.find_all("a", href=True, title=privacidadeRegex)
     results = []
     for item in privacidadeResults:
-        site, response = getSite(item['href'])
+        site, response, _ = getSite(item['href'])
         if response != 200:
             continue
         result = scrapeCnpj(site)
@@ -177,6 +179,7 @@ def getLinkedin(content):
         result = result[0]
     elif len(result) > 1:
         print("Mais de um LinkedIn encontrado: " + str(result))
+        return ','.join(result)
     return result
 
 # Busca links para o Facebook e retorna os resultados
@@ -193,12 +196,15 @@ def getFacebook(content):
     if result == []:
         result = ""
         print("Nenhum Facebook encontrado.")
+        return result
     elif len(result) == 1:
         print("Um Facebook encontrado: " + result[0])
         result = result[0]
+        return result
     elif len(result) > 1:
         print("Mais de um Facebook encontrado: " + str(result))
-    return result
+        result = ','.join(result)
+        return result
 
 # Busca links para o Instagram e retorna os resultados
 def getInstagram(content):
@@ -217,6 +223,7 @@ def getInstagram(content):
         result = result[0]
     elif len(result) > 1:
         print("Mais de um Instagram encontrado: " + str(result))
+        return ','.join(result)
     return result
 
 # Busca links para o Twitter e retorna os resultados
@@ -236,6 +243,7 @@ def getTwitter(content):
         result = result[0]
     elif len(result) > 1:
         print("Mais de um Twitter encontrado: " + str(result))
+        return ','.join(result)
     return result
 
 # Busca links para páginas de organização do Crunchbase e retorna os resultados
@@ -255,6 +263,7 @@ def getCrunchbase(content):
         result = result[0]
     elif len(result) > 1:
         print("Mais de um Crunchbase encontrado: " + str(result))
+        return ','.join(result)
     return result
 
 def scrapeEmail(content):
@@ -270,7 +279,7 @@ def getContato(content):
     termosResults = content.find_all("a", href=True, title=contatoRegex)
     results = []
     for item in termosResults:
-        site, response = getSite(item['href'])
+        site, response, _ = getSite(item['href'])
         if response != 200:
             continue
         result = scrapeEmail(site)
@@ -296,6 +305,8 @@ def getEmail(content, currentemails):
     return ','.join(result)
 
 # Pega o site de cada startup do CSV e roda cada uma das buscas as buscas nele
+recheck = True
+
 for startup in startupList:
     if startup['ID']:
         if int(startup['ID']) < int(min):
@@ -304,24 +315,27 @@ for startup in startupList:
         if int(startup['ID']) > int(max):
             outputWriter.writerow(startup)
             continue
-    # Comente esse trecho para reobter dados de startups que já tem o campo Response preenchido
-    #if startup['Response'] != '':
-    #    outputWriter.writerow(startup)
-    #    print('\n{} já tem Response. Pulando para o próximo site... \n'.format(startup['Startup']))
-    #    continue
+    if recheck == False and startup['Response'] != '':
+        outputWriter.writerow(startup)
+        #print('\n{} já tem Response. Pulando para o próximo site... \n'.format(startup['Startup']))
+        continue
     if 'Tirar?' in startup and startup['Tirar?']:
         outputWriter.writerow(startup)
-        print('\n{} está marcada para remoção. Pulando para o próximo site... \n'.format(startup['Startup']))
+        #print('\n{} está marcada para remoção. Pulando para o próximo site... \n'.format(startup['Startup']))
+        continue
+    if not startup['Site']:
         continue
     print("(" + str(startupList.index(startup) + 1) + "/" + str(len(startupList)) + ")" + "\nRequisitando site da " + startup['Startup'] + "...")
     print("URL: " + startup['Site'])
-    site, response = getSite(startup['Site'])
+    site, response, final_url = getSite(startup['Site'])
     startup['Response'] = response
     if response != 200:
         print("SITE RETORNOU ERRO. Código retornado: " + str(response))
         print("\n")
         outputWriter.writerow(startup)
         continue
+    startup['Site checksum'] = zlib.adler32(site.encode())
+    startup['Site final'] = final_url
     if noReplace == False:
         startup['CNPJ'] = getCnpj(site)
         if startup['CNPJ'] == "":

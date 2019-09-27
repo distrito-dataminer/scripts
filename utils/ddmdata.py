@@ -21,6 +21,7 @@ def readcsv(csvpath):
     return startupList
 
 
+
 def writecsv(startupList, csvpath='output.csv'):
     all_keys = []
     for item in startupList:
@@ -33,10 +34,12 @@ def writecsv(startupList, csvpath='output.csv'):
     outputWriter.writerows(startupList)
 
 
+
 def dict_from_csv(csvpath):
     reader = csv.reader(open(csvpath, 'r', encoding='utf8'))
     d = dict(reader)
     return d
+
 
 
 def idict_from_csv(csvpath):
@@ -46,9 +49,12 @@ def idict_from_csv(csvpath):
     return inverted_d
 
 
+
 def data_complete(master_list, slave_list, dictkey='Site', no_add=True):
     
     for master in master_list:
+        if 'ID' in master and int(master['ID']) > last_id:
+            last_id = int(master['ID'])
         clean_master_key = master[dictkey].replace('http://', '').lower()
         if clean_master_key == '':
             continue
@@ -66,24 +72,86 @@ def data_complete(master_list, slave_list, dictkey='Site', no_add=True):
                                 print("Completando {} da {} com valor {}".format(
                                     key.upper(), master["Startup"].upper(), slave[key]))
 
-            if no_add == False:
-                new_startups = []
-                print("\nAs startups a seguir não foram encontradas na base e estão sendo adicionadas:\n")
-                for slave in slave_list:
-                    if 'Found' not in slave:
-                        print(slave['Startup'])
-                        new_startups.append(slave)
+    if no_add == False:
+        new_startups = []
+        print("\nAs startups a seguir não foram encontradas na base e estão sendo adicionadas:\n")
+        for slave in slave_list:
+            if 'Found' not in slave:
+                print(slave['Startup'])
+                new_startups.append(slave)
 
-                for startup in new_startups:
-                    clean_startup = OrderedDict()
-                    for key in master_list[0]:
-                        clean_startup[key] = ""
-                    for key in startup:
-                        if key in clean_startup:
-                            clean_startup[key] = startup[key]
-                    master_list.append(clean_startup)
+        for startup in new_startups:
+            clean_startup = OrderedDict()
+            for key in master_list[0]:
+                clean_startup[key] = ""
+            for key in startup:
+                if key in clean_startup:
+                    clean_startup[key] = startup[key]
+            if 'ID' in clean_startup and last_id != 0:
+                startup['ID'] = last_id + 1
+                last_id += 1
+            master_list.append(clean_startup)
 
     return master_list
+
+
+
+def data_replace(master_list, slave_list, dictkey='Site', no_add=False):
+
+    add_list = ['Descrição', 'Tags', 'Setor']
+    last_id = 0
+    
+    for master in master_list:
+        if 'ID' in master and int(master['ID']) > last_id:
+            last_id = int(master['ID'])
+        clean_master_key = master[dictkey].replace('http://', '').lower().replace(' ', '')
+        if clean_master_key == '':
+            continue
+        for slave in slave_list:
+            clean_slave_key = slave[dictkey].replace('http://', '').lower().replace(' ', '')
+            if clean_slave_key == '':
+                continue
+            if clean_master_key == clean_slave_key:
+                slave['Found'] = 'YES'
+                for key in master:
+                    if key in slave and slave[key] != '':
+                        if key in add_list and master[key] != '':
+                            current_list = master[key].split(',')
+                            new_list = master[key].split(',')
+                            final_list = list(unique(current_list + new_list))
+                            if key == 'Descrição':
+                                master[key] = '\n\n'.join(final_list)
+                            else:
+                                master[key] = ','.join(final_list)
+                            print("Completando {} da {} com valor {}".format(
+                                key.upper(), master["Startup"].upper(), ','.join(final_list)))
+                        else:
+                            master[key] = slave[key]
+                            print("Completando {} da {} com valor {}".format(
+                                key.upper(), master["Startup"].upper(), slave[key]))
+
+    if no_add == False:
+        new_startups = []
+        print("\nAs startups a seguir não foram encontradas na base e estão sendo adicionadas:\n")
+        for slave in slave_list:
+            if 'Found' not in slave:
+                print(slave['Startup'])
+                new_startups.append(slave)
+
+        for startup in new_startups:
+            clean_startup = OrderedDict()
+            for key in master_list[0]:
+                clean_startup[key] = ""
+            for key in startup:
+                if key in clean_startup:
+                    clean_startup[key] = startup[key]
+            if 'ID' in clean_startup and last_id != 0:
+                clean_startup['ID'] = last_id + 1
+                last_id += 1
+            master_list.append(clean_startup)
+
+    return master_list
+
 
 
 def lkd_merge(startup_list, lkd_list):
@@ -105,15 +173,15 @@ def lkd_merge(startup_list, lkd_list):
                     startup['Nome LKD'] = lkd['name']
                 if lkd['company_size'] != '':
                     startup['Faixa # de funcionários'] = lkd['company_size']
-                if lkd['founded_year'] != '':
+                if lkd['founded_year'] != '' or (lkd['founded_year'] != '' and startup['Ano de Fundação'] == ''):
                     startup['Ano de fundação'] = lkd['founded_year']
                 if lkd['cover_image'] != '':
                     startup['Foto de capa'] = lkd['cover_image']
-                if 'Cidade' not in startup or lkd['city'] != '' and startup['Cidade']:
+                if 'Cidade' not in startup or (lkd['city'] != '' and startup['Cidade'] == ''):
                     startup['Cidade'] = lkd['city']
-                if 'Estado' not in startup or lkd['state'] != '' and startup['Estado'] == '':
+                if 'Estado' not in startup or (lkd['state'] != '' and startup['Estado'] == ''):
                     startup['Estado'] = lkd['state']
-                if 'País' not in startup or lkd['country'] != '' and startup['País'] == '':
+                if 'País' not in startup or (lkd['country'] != '' and startup['País'] == ''):
                     startup['País'] = lkd['country']
                 if lkd['number_of_self_declared_employees'] != '':
                     startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']
@@ -144,6 +212,7 @@ def lkd_merge(startup_list, lkd_list):
     return startup_list, address_list
 
 
+
 def startups_from_lkd(lkd_list):
     startup_list = []
     for lkd_info in lkd_list:
@@ -155,6 +224,7 @@ def startups_from_lkd(lkd_list):
             startup_list.append(startup)
     startup_list, address_list = lkd_merge(startup_list, lkd_list)
     return startup_list, address_list
+
 
 
 def startups_from_crunchbase(cb_list):
@@ -178,6 +248,7 @@ def startups_from_crunchbase(cb_list):
             startup['Ano de fundação'] = cb_info['Founded Date'][0:4]
         startup_list.append(startup)
     return startup_list
+
 
 
 def startups_from_startupbase(sb_list):
@@ -232,3 +303,42 @@ def startups_from_startupbase(sb_list):
 
     return startup_list
 
+
+
+def rd_convert(rd_list):
+    
+    conversion_dict = {'Email': 'E-mail',
+                  'Telefone': 'Telefone',
+                  'Estado': 'Estado',
+                  'Cidade': 'Cidade',
+                  'Ano de Fundação': 'Ano de fundação',
+                  'CNPJ': 'CNPJ',
+                  'Constituição Legal': 'Constituição Legal',
+                  'Descrição do Produto / Serviço': 'Descrição',
+                  'Estágio atual': 'Estágio da operação',
+                  'Faixa de faturamento anual': 'Faturamento Presumido',
+                  'LinkedIn Company Page da Startup': 'LinkedIn',
+                  'Modelo de negócios': 'Modelo de negócio',
+                  'Modelo do Público': 'Público',
+                  'Nome Completo dos Fundadores': 'Founders',
+                  'Número de funcionários da sua empresa': 'Faixa # de funcionários',
+                  'Segmento da Startup': 'Setor',
+                  'Site da Startup': 'Site',
+                  'Startup': 'Startup'}
+
+    sector_dict = {'Agtech (Agronegócio)': 'AgTech',
+                'AdTech (Advertising, Marketing, Social, MarTech)': 'AdTech'}
+
+    converted_list = []
+
+    for startup in rd_list:
+        converted_startup = {'Fonte': 'Cadastro DM', 'Checado': 'Cadastro DM'}
+        for key in startup:
+            if key in conversion_dict:
+                converted_startup[conversion_dict[key]] = startup[key]
+        if 'Setor' in converted_startup:
+            if converted_startup['Setor'] in sector_dict:
+                converted_startup['Setor'] = sector_dict[converted_startup['Setor']]
+        converted_list.append(converted_startup)
+
+    return converted_list

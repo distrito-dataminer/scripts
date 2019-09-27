@@ -24,8 +24,8 @@ for startup in startupList:
     
     for logo in logoList:
         
-        if startup['Logo'] == 'TRUE':
-            break
+        #if startup['Logo'] == 'TRUE':
+        #    break
             
         mo = logore.search(logo)
         

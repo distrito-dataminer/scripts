@@ -15,12 +15,19 @@ from utils import cleaner, ddmdata
 startupList = ddmdata.readcsv(sys.argv[1])
 
 score = False
+strip = False
+
 if len(sys.argv) > 2:
-    if sys.argv[2].lower() == "score":
+    if 'score' in sys.argv:
         score = True
+    if 'strip' in sys.argv:
+        strip = True
 
 # Limpa os dados
 startupList = cleaner.clean(cleaner.clean(cleaner.clean(startupList)))
+
+# Faz um strip nos campos para tirar espaços a mais
+startupList = cleaner.strip_fields(startupList)
 
 # Pontua o nível de preenchimento se essa opção estiver ligada
 if score == True:

@@ -2,6 +2,10 @@
 # Dicionários, listas e demais dados utilizados em scripts diversos do Dataminer
 
 
+with open(r'.\utils\datasets\invalidLKDs.txt', 'r') as f:
+    invalidLinkedin = [line.strip() for line in f.readlines()]
+    f.close()
+
 siglas = {
     "acre": "AC",
     "alagoas": "AL",

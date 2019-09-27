@@ -67,7 +67,12 @@ def updateStartup(estudada, startup):
 
 base, estudo = checkID(base, estudo)
 
-lastID = int(base[-1]['ID'])
+lastID = 0
+for startup in base:
+    if int(startup['ID']) > lastID:
+        lastID = int(startup['ID'])
+
+new_count = 0
 
 for estudada in estudo:
     if 'Categoria' not in estudada:
@@ -95,7 +100,10 @@ for estudada in estudo:
                 if key not in ignoreFields:
                     newStartup[key] = estudada[key]
             base.append(newStartup)
+            print('\nAdicionando nova startup: {}'.format(estudada['Startup']))
+            new_count += 1
 
+print('\n{} novas startups adicionadas!'.format(new_count))
 
 base = cleaner.clean(base)
 estudo = cleaner.clean(estudo)

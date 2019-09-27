@@ -9,6 +9,7 @@ for filename in os.listdir(mypath):
     kpi = {}
     kpi['Data'] = filename.replace('Base Compilada - Startups - ', '').replace('.csv', '').replace('.', '-')
     base = ddmdata.readcsv(os.path.join(mypath, filename))
+    base = cleaner.clean(base)
     base = cleaner.score(base)
     startup_count = 0
     removed = 0

@@ -63,18 +63,19 @@ def clean(startupList):
     # Limpa o URL do LinkedIn
         if 'LinkedIn' in startup:
             if startup['LinkedIn']:
-                lkdList = startup['LinkedIn'].strip().split(',')
                 newLkdList = []
+                lkdList = startup['LinkedIn'].strip().split(',')
                 for lkd in lkdList:
                     lkdRegex = re.compile(
                         r'linkedin\.com\/company\/[^\/?"]*', re.IGNORECASE)
                     mo = lkdRegex.search(lkd)
                     if mo != None:
                         lkd = "http://" + mo.group().lower().strip()
-                        newLkdList.append(lkd)
+                        if lkd in datasets.invalidLinkedin:
+                            print('Removendo LKD inválido: {}'.format(lkd))
+                        else:
+                            newLkdList.append(lkd)
                     else:
-                        if 'twitter' in lkd and 'Twitter' in startup:
-                            startup['Twitter'] += ',' + lkd
                         print('Removendo LKD inválido: {}'.format(lkd))
                 startup['LinkedIn'] = ','.join(list(unique(newLkdList)))
 
@@ -85,9 +86,9 @@ def clean(startupList):
                 newFbList = []
                 for fb in fbList:
                     fbRegex = re.compile(
-                        r'facebook\.com\/(pg\/|page\/|pages\/)?[^\/&?"]*', re.IGNORECASE)
+                        r'facebook\.com\/(pg\/|page\/|pages\/)?[^\/&?\s"]*', re.IGNORECASE)
                     mo = fbRegex.search(fb)
-                    if mo != None:
+                    if mo:
                         fb = "http://" + mo.group().lower().strip()
                         if fb not in datasets.invalidFacebook:
                             newFbList.append(fb)
@@ -220,7 +221,17 @@ def clean(startupList):
                     charList = [' ', '[', ']', "'"]
                     for char in charList:
                         email = email.replace(char, '')
+                    old_email = email
+                    email = re.sub(r'(\(\d\d\))?\d+-\d+', '', email)
+                    if email != old_email:
+                        print('Changed {} to {}'.format(old_email, email))
+                        emailList.remove(old_email)
                 startup['E-mail'] = ','.join(list(unique(emailList)))
+
+        if 'Descrição' in startup:
+            if startup['Descrição']:
+                while startup['Descrição'] != startup['Descrição'].strip().strip('\n'):
+                    startup['Descrição'] = startup['Descrição'].strip().strip('\n')
 
     # Tira newlines e substitui por vírgulas pra separar mais de um item por célula
         exceptionList = ['Descrição']
@@ -290,7 +301,7 @@ def score(startupList):
             score += 2
         if startup['Modelo de negócio']:
             score += 3
-        if startup['Logo'] == 'TRUE':
+        if 'Logo' in startup and startup['Logo'] == 'TRUE':
             score += 4
         if startup['Acelerada por'] or startup['Investida por'] or startup['Incubada por'] or startup['Hub de inovação']:
             score += 5
@@ -318,25 +329,35 @@ def clean_endereco(enderecolist):
 
     return enderecolist
 
+
+
 def dedupe(startup_list):
     
     startup_list = clean(startup_list)
     startup_list = score(startup_list)
 
     dupes_list = []
+    lkd_dupe_list = []
 
     for startup in startup_list:
         dupe_list = [startup]
         startup['Dedupe check'] = True
         clean_name = unidecode(startup['Startup'].lower().replace(' ', ''))
         clean_site = startup['Site'].replace('http://', '')
+        clean_finalsite = startup['Site final'].replace('http://', '')
         for startup2 in startup_list:
             if 'Dedupe check' in startup2 and startup2['Dedupe check'] == True:
                 continue
             clean_site2 = startup2['Site'].replace('http://', '')
             if clean_site != '' and clean_site2 != '':
-                if clean_site == clean_site2 or clean_site in clean_site2 or clean_site2 in clean_site:
+                if clean_site == clean_site2:
                     print('Site match! {} and {}'.format(startup['Site'], startup2['Site']))
+                    dupe_list.append(startup2)
+                    continue
+            clean_finalsite2 = startup2['Site final'].replace('http://', '')
+            if clean_finalsite != '' and clean_finalsite2 != '':
+                if clean_finalsite == clean_finalsite2:
+                    print('Final site match! {} and {}'.format(startup['Site final'], startup2['Site final']))
                     dupe_list.append(startup2)
                     continue
             clean_name2 = unidecode(startup2['Startup'].lower().replace(' ', ''))
@@ -345,9 +366,9 @@ def dedupe(startup_list):
                     print('Name match! {} and {}'.format(startup['Startup'], startup2['Startup']))
                     dupe_list.append(startup2)
                     continue
-            if startup['LinkedIn'] and startup['LinkedIn'] == startup2['LinkedIn']:
+            if startup['LinkedIn'] and startup['LinkedIn'] == startup2['LinkedIn'] and not startup['Tirar?'] and not startup2['Tirar?']:
                 print('LinkedIn match! {} and {}'.format(startup['LinkedIn'], startup2['LinkedIn']))
-                dupe_list.append(startup2)
+                lkd_dupe_list.append(startup2['LinkedIn'])
                 continue
         if len(dupe_list) > 1:
             dupes_list.append(dupe_list)
@@ -360,6 +381,7 @@ def dedupe(startup_list):
         all_sub = []
         all_email = []
         max_ndp = 0
+        #min_id = 0
         for dupe in dupe_list:
             if dupe['NDP'] == '':
                 ndp = 1
@@ -367,11 +389,22 @@ def dedupe(startup_list):
                 ndp = int(dupe['NDP'])
             if ndp >= max_ndp:
                 main_startup = dupe
+            #if min_id == 0 or int(dupe['ID']) < min_id:
+            #    main_startup = dupe
+        if main_startup['Tirar?']:
+            print('Main startup is marked for removal: {}'.format(main_startup['Startup']))
+            print('Reason: {}'.format(main_startup['Tirar?']))
+            if main_startup['Tirar?'] == 'Duplicata':
+                print('Como está marcada como Duplicata, será desmarcada e usada como entrada principal.')
+                main_startup['Tirar?'] = ''
         for key in main_startup:
             new_startup[key] = main_startup[key]
         for dupe in dupe_list:
             for key in startup:
-                if dupe[key]:
+                if key == 'Tirar?':
+                    if startup[key] and (startup[key] != 'Duplicata'):
+                        new_startup[key] = dupe[key]
+                elif dupe[key]:
                     if new_startup[key] == '' and dupe[key] != '':
                         new_startup[key] = dupe[key]
             if dupe['Descrição'] not in new_startup['Descrição']:
@@ -386,13 +419,39 @@ def dedupe(startup_list):
         new_startup['Categoria'] = ','.join(list(unique(all_cat)))
         new_startup['Subcategoria'] = ','.join(list(unique(all_sub)))
         new_startup['E-mail'] = ','.join(list(unique(all_email)))
+        if new_startup['Tirar?'] == 'Duplicata':
+            print('{} - {} estava marcada como duplicata mas agora é a entrada principal.'.format(new_startup['ID'], new_startup['Startup']))
+            new_startup['Tirar?'] = ''
         for index, startup in enumerate(startup_list):
             if startup == main_startup:
+                print('Substituindo startup principal!')
                 startup_list[index] = new_startup
-            elif startup in dupe_list and startup['Tirar?'] == '':
-                startup['Tirar?'] = 'Duplicata'
+            else:
+                if startup in dupe_list:
+                    print('Marcando duplicata para remoção!')
+                    startup_list[index]['Tirar?'] = 'Duplicata'
+
+    print('LKD Dupes:')
+    pprint.pprint(lkd_dupe_list)
 
     return startup_list
 
-        
+
+
+def strip_fields(startup_list):
+
+    multi_fields = ['Tags', 'Setor', 'Público', 'Founders', 'E-mail', 'Categoria', 'Subcategoria']
+
+    for startup in startup_list:
+        for key in startup:
+            if startup[key]:
+                startup[key] = startup[key].strip()
+                if key in multi_fields:
+                    full_list = startup[key].split(',')
+                    new_list = []
+                    for item in full_list:
+                        new_list.append(item.strip())
+                    startup[key] = ','.join(new_list)
+
+    return startup_list
 
