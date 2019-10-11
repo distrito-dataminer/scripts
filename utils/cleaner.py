@@ -59,6 +59,19 @@ def clean(startupList):
                     startup['Site'] = ''
                 else:
                     startup['Site'] = newSite
+        
+        if 'Site final' in startup:
+            if startup['Site final']:
+                newSite = startup['Site final'].lower().replace(
+                    "https://", "http://")
+                if "http://" not in newSite:
+                    newSite = "http://" + newSite
+                newSite = newSite.replace("www.", "")
+                siteRegex = re.compile(r'http:\/\/[^\/&?"]*', re.IGNORECASE)
+                mo = siteRegex.search(newSite)
+                if mo != None:
+                    newSite = mo.group().lower().strip().strip('/').strip()
+                    startup['Site final'] = newSite
 
     # Limpa o URL do LinkedIn
         if 'LinkedIn' in startup:
@@ -78,6 +91,22 @@ def clean(startupList):
                     else:
                         print('Removendo LKD inválido: {}'.format(lkd))
                 startup['LinkedIn'] = ','.join(list(unique(newLkdList)))
+
+    # Limpa o URL do LinkedIn pessoal
+        if 'LinkedIn Pessoal' in startup:
+            if startup['LinkedIn Pessoal']:
+                newLkdList = []
+                lkdList = startup['LinkedIn Pessoal'].strip().split(',')
+                for lkd in lkdList:
+                    lkdRegex = re.compile(
+                        r'linkedin\.com\/in\/[^\/?"]*', re.IGNORECASE)
+                    mo = lkdRegex.search(lkd)
+                    if mo != None:
+                        lkd = "http://" + mo.group().lower().strip()
+                        newLkdList.append(lkd)
+                    else:
+                        print('Removendo LKD inválido: {}'.format(lkd))
+                startup['LinkedIn Pessoal'] = ','.join(list(unique(newLkdList)))
 
     # Limpa o URL do Facebook
         if 'Facebook' in startup:
@@ -331,10 +360,11 @@ def clean_endereco(enderecolist):
 
 
 
-def dedupe(startup_list):
+def dedupe(startup_list, scoring=True):
     
     startup_list = clean(startup_list)
-    startup_list = score(startup_list)
+    if scoring:
+        startup_list = score(startup_list)
 
     dupes_list = []
     lkd_dupe_list = []
@@ -344,7 +374,8 @@ def dedupe(startup_list):
         startup['Dedupe check'] = True
         clean_name = unidecode(startup['Startup'].lower().replace(' ', ''))
         clean_site = startup['Site'].replace('http://', '')
-        clean_finalsite = startup['Site final'].replace('http://', '')
+        if 'Site final' in startup:
+            clean_finalsite = startup['Site final'].replace('http://', '')
         for startup2 in startup_list:
             if 'Dedupe check' in startup2 and startup2['Dedupe check'] == True:
                 continue
@@ -354,22 +385,24 @@ def dedupe(startup_list):
                     print('Site match! {} and {}'.format(startup['Site'], startup2['Site']))
                     dupe_list.append(startup2)
                     continue
-            clean_finalsite2 = startup2['Site final'].replace('http://', '')
-            if clean_finalsite != '' and clean_finalsite2 != '':
-                if clean_finalsite == clean_finalsite2:
-                    print('Final site match! {} and {}'.format(startup['Site final'], startup2['Site final']))
-                    dupe_list.append(startup2)
-                    continue
+            if 'Site final' in startup and 'Site final' in startup2:
+                clean_finalsite2 = startup2['Site final'].replace('http://', '')
+                if clean_finalsite != '' and clean_finalsite2 != '':
+                    if clean_finalsite == clean_finalsite2:
+                        print('Final site match! {} and {}'.format(startup['Site final'], startup2['Site final']))
+                        dupe_list.append(startup2)
+                        continue
             clean_name2 = unidecode(startup2['Startup'].lower().replace(' ', ''))
             if clean_name != '' and clean_name2 != '':
                 if clean_name == clean_name2:
                     print('Name match! {} and {}'.format(startup['Startup'], startup2['Startup']))
                     dupe_list.append(startup2)
                     continue
-            if startup['LinkedIn'] and startup['LinkedIn'] == startup2['LinkedIn'] and not startup['Tirar?'] and not startup2['Tirar?']:
-                print('LinkedIn match! {} and {}'.format(startup['LinkedIn'], startup2['LinkedIn']))
-                lkd_dupe_list.append(startup2['LinkedIn'])
-                continue
+            if 'LinkedIn' in startup:
+                if startup['LinkedIn'] and startup['LinkedIn'] == startup2['LinkedIn'] and not startup['Tirar?'] and not startup2['Tirar?']:
+                    print('LinkedIn match! {} and {}'.format(startup['LinkedIn'], startup2['LinkedIn']))
+                    lkd_dupe_list.append(startup2['LinkedIn'])
+                    continue
         if len(dupe_list) > 1:
             dupes_list.append(dupe_list)
 
@@ -381,17 +414,21 @@ def dedupe(startup_list):
         all_sub = []
         all_email = []
         max_ndp = 0
-        #min_id = 0
-        for dupe in dupe_list:
-            if dupe['NDP'] == '':
-                ndp = 1
-            else:
-                ndp = int(dupe['NDP'])
-            if ndp >= max_ndp:
-                main_startup = dupe
-            #if min_id == 0 or int(dupe['ID']) < min_id:
-            #    main_startup = dupe
-        if main_startup['Tirar?']:
+        min_id = 0
+        if scoring:
+            for dupe in dupe_list:
+                if dupe['NDP'] == '':
+                    ndp = 1
+                else:
+                    ndp = int(dupe['NDP'])
+                if ndp >= max_ndp:
+                    main_startup = dupe
+        else:
+            for dupe in dupe_list:
+                if min_id == 0 or int(dupe['ID']) < min_id:
+                    main_startup = dupe
+                    min_id = int(dupe['ID'])
+        if 'Tirar?' in main_startup and main_startup['Tirar?']:
             print('Main startup is marked for removal: {}'.format(main_startup['Startup']))
             print('Reason: {}'.format(main_startup['Tirar?']))
             if main_startup['Tirar?'] == 'Duplicata':
@@ -407,19 +444,24 @@ def dedupe(startup_list):
                 elif dupe[key]:
                     if new_startup[key] == '' and dupe[key] != '':
                         new_startup[key] = dupe[key]
-            if dupe['Descrição'] not in new_startup['Descrição']:
+            if 'Descrição' in dupe and dupe['Descrição'] not in new_startup['Descrição']:
                 new_startup['Descrição'] = '\n\n' + dupe['Descrição']
-            all_tags += dupe['Tags'].split(',')
-            all_setor += dupe['Setor'].split(',')
-            all_cat += dupe['Categoria'].split(',')
-            all_sub += dupe['Subcategoria'].split(',')
-            all_email += dupe['E-mail'].split(',')
+            if 'Tags' in dupe:
+                all_tags += dupe['Tags'].split(',')
+            if 'Setor' in dupe:
+                all_setor += dupe['Setor'].split(',')
+            if 'Categoria' in dupe:
+                all_cat += dupe['Categoria'].split(',')
+            if 'Subcategoria' in dupe: 
+                all_sub += dupe['Subcategoria'].split(',')
+            if 'E-mail' in dupe:
+                all_email += dupe['E-mail'].split(',')
         new_startup['Tags'] = ','.join(list(unique(all_tags)))
         new_startup['Setor'] = ','.join(list(unique(all_setor)))
         new_startup['Categoria'] = ','.join(list(unique(all_cat)))
         new_startup['Subcategoria'] = ','.join(list(unique(all_sub)))
         new_startup['E-mail'] = ','.join(list(unique(all_email)))
-        if new_startup['Tirar?'] == 'Duplicata':
+        if 'Tirar?' in new_startup and new_startup['Tirar?'] == 'Duplicata':
             print('{} - {} estava marcada como duplicata mas agora é a entrada principal.'.format(new_startup['ID'], new_startup['Startup']))
             new_startup['Tirar?'] = ''
         for index, startup in enumerate(startup_list):
@@ -455,3 +497,6 @@ def strip_fields(startup_list):
 
     return startup_list
 
+def bare(name):
+    bare_name = re.sub(r'[\W_]+', '', unidecode(name).lower().strip())
+    return bare_name

@@ -92,7 +92,7 @@ cidades = {
 }
 
 invalidsites = [
-    'http://facebook.com', 'http://linkedin.com', 'http://google.com', 'http://pipe.social'
+    'http://facebook.com', 'http://linkedin.com', 'http://google.com', 'http://pipe.social', 'http://bit.ly', 'http://itunes.apple.com', 'http://behance.com'
 ]
 
 invalidFacebook = ['http://facebook.com/sharer', 'http://facebook.com/share']

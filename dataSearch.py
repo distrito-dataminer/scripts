@@ -10,7 +10,14 @@ from collections import OrderedDict
 from unidecode import unidecode
 
 startup_list = ddmdata.readcsv(sys.argv[1])
-full_output = True
+
+obligatory_fields = ['Tirar?', 'Tags', 'Descrição', 'Categoria', 'Subcategoria']
+for startup in startup_list:
+    for field in obligatory_fields:
+        if field not in startup:
+            startup[field] = ''
+            
+full_output = False
 
 if len(sys.argv) >= 3:
     search_items = ddmdata.readcsv(sys.argv[2])
@@ -32,6 +39,8 @@ for item in search_items:
     if 'Tags2' in item and item['Tags2']:
         multi_tag = True
         extra_terms = item['Tags2'].split(',')
+
+    demanda = item['Demanda']
 
     print('\nRunning search for {} - {}'.format(item['Número'], item['Demanda']))
     print('Tags: {}'.format(item['Tags']))
@@ -70,10 +79,11 @@ for item in search_items:
             cat_dict[term] = 0
 
     for startup in startup_list:
-        if startup['Tirar?'] != '':
+        if 'Tirar?' in startup and startup['Tirar?']:
             continue
         match_count = 0
         matched_in = []
+        matched_for = []
         for term in search_terms:
             term_pattern = re.compile('\\b{}\\b'.format(term), re.IGNORECASE)
             if re.search(term_pattern, unidecode(startup['Tags'])):
@@ -81,16 +91,22 @@ for item in search_items:
                 tag_dict[term] += 1
                 match_count += 1
                 matched_in.append('Tags')
+                if not multi_tag:
+                    matched_for.append(demanda)
             if re.search(term_pattern, unidecode(startup['Descrição'])):
                 description_matches.append(startup)
                 desc_dict[term] += 1
                 match_count += 1
                 matched_in.append('Descrição')
+                if not multi_tag:
+                    matched_for.append(demanda)
             if re.search(term_pattern, unidecode(startup['Categoria'])) or re.search(term_pattern, unidecode(startup['Subcategoria'])):
                 category_matches.append(startup)
                 cat_dict[term] += 1
                 match_count += 1
                 matched_in.append('Categoria')
+                if not multi_tag:
+                    matched_for.append(demanda)
         if multi_tag and match_count > 0:
             for term in extra_terms:
                 term_pattern = re.compile('\\b{}\\b'.format(term), re.IGNORECASE)
@@ -99,18 +115,22 @@ for item in search_items:
                     tag_dict[term] += 1
                     match_count += 1
                     matched_in.append('Tags')
+                    matched_for.append(demanda)
                 if re.search(term_pattern, unidecode(startup['Descrição'])):
                     extra_description_matches.append(startup)
                     desc_dict[term] += 1
                     match_count += 1
                     matched_in.append('Descrição')
+                    matched_for.append(demanda)
                 if re.search(term_pattern, unidecode(startup['Categoria'])) or re.search(term_pattern, unidecode(startup['Subcategoria'])):
                     extra_category_matches.append(startup)
                     cat_dict[term] += 1
                     match_count += 1
                     matched_in.append('Categoria')
+                    matched_for.append(demanda)
         startup['Match Count'] = match_count
         startup['Matched in'] = ','.join(list(unique(matched_in)))
+        startup['Matched for'] = ','.join(list(unique(matched_for)))
 
     tnd_matches = [match for match in tag_matches if match in description_matches]
 

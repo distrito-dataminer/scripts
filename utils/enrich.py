@@ -10,6 +10,7 @@ from collections import OrderedDict
 from time import sleep
 from more_itertools import unique_everseen as unique
 
+
 devkey = privatekeys.devkey
 token = privatekeys.tokenTU
 
@@ -83,12 +84,14 @@ def lkd_address(endereco, startup):
     return address
 
 
-def enrich(startupList):
+def enrich(startupList, replace=False):
     errorlist = []
     addressList = []
     for startup in startupList:
         try:
-            if startup['CNPJ'] != '' and startup['Razão Social'] == '':
+            if startup['CNPJ']:
+                if 'Razão Social' in startup and startup['Razão Social'] and replace == False:
+                    continue
                 print("Enriquecendo dados de " + startup['Startup'] + '...')
                 cnpj = startup['CNPJ']
                 cnpj = re.sub(r'[^\d]', '', cnpj)
@@ -151,6 +154,12 @@ def enrich(startupList):
                 except Exception as e:
                     print(startup['Startup'] +
                           " deu erro no número de sócios:")
+                    print(repr(e))
+                try:
+                    socio_list = [str(socio['NR_CPF']) for socio in data['QSA_PJ'] if socio['NR_CPF'] != -1]
+                    startup['CPFs Sócios'] = ','.join(socio_list)
+                except Exception as e:
+                    print(startup['Startup'] + " deu erro ao pegar o CPF dos sócios:")
                     print(repr(e))
                 try:
                     enderecos = data['ENDERECOS']
@@ -264,3 +273,103 @@ def geocode_individual(endereco):
         except Exception as e:
             print(repr(e))
             return None
+
+
+
+def info_from_address(base, enderecos):
+
+    for startup in base:
+        if startup['Cidade'] == '' or startup['Estado'] == '':
+            for endereco in enderecos:
+                if endereco['End. Fiscal'].lower() in ['', 'false']:
+                    continue
+                if endereco['Startup ID'] == startup['ID']:
+                    if startup['Cidade'] == '' and endereco['Cidade'] != '':
+                        print('{} não tinha cidade e agora tem!'.format(startup['Startup']))
+                        startup['Cidade'] = endereco['Cidade']
+                    if startup['Estado'] == '' and endereco['Estado'] != '':
+                        print('{} não tinha estado e agora tem!'.format(startup['Startup']))
+                        startup['Estado'] = endereco['Estado']
+                    if startup['Endereço'] == '' and endereco['Logradouro'] != '':
+                        print('{} não tinha endereço e agora tem!'.format(startup['Startup']))
+                        startup['Endereço'] = endereco['Logradouro']
+
+    for startup in base:
+        if startup['Cidade'] == '' or startup['Estado'] == '':
+            for endereco in enderecos:
+                if endereco['Startup ID'] == startup['ID']:
+                    if startup['Cidade'] == '' and endereco['Cidade'] != '':
+                        print('{} não tinha cidade e agora tem!'.format(startup['Startup']))
+                        startup['Cidade'] = endereco['Cidade']
+                    if startup['Estado'] == '' and endereco['Estado'] != '':
+                        print('{} não tinha estado e agora tem!'.format(startup['Startup']))
+                        startup['Estado'] = endereco['Estado']
+                    if startup['Endereço'] == '' and endereco['Logradouro'] != '':
+                        print('{} não tinha endereço e agora tem!'.format(startup['Startup']))
+                        startup['Endereço'] = endereco['Logradouro']
+
+    return base
+
+
+
+def serpapi_lkd(startup_list, no_replace=True, max_count=3500):
+
+    from serpapi.google_search_results import GoogleSearchResults
+
+    key = privatekeys.serpapi_key
+    num_results = 1
+    start = 0
+    count = 0
+    success_count = 0
+    location = 'Brazil'
+
+    if no_replace:
+        print('Startups que já têm LinkedIn, já passaram pelo bot ou estão marcadas para remoção serão puladas!')
+
+    for startup in startup_list:
+        if no_replace and startup['LinkedIn']:
+            #print('{} já tem LinkedIn.'.format(startup['Startup']))
+            continue
+        if 'Bot LinkedIn' in startup and startup['Bot LinkedIn']:
+            print('{} já passou pelo bot do LinkedIn'.format(startup['Startup']))
+            continue
+        if startup['Tirar?']:
+            print('{} está marcada para remoção.'.format(startup['Startup']))
+            continue
+        print('Pegando LinkedIn de {}'.format(startup['Startup']))
+        count += 1
+        if count >= max_count:
+            break
+        clean_site = startup['Site'].lower().replace('http://', '')
+        query = 'site:www.linkedin.com/company "{}"'.format(clean_site)
+        client = GoogleSearchResults({"q": query, "location": location, "api_key": key, "num": num_results, "start": start, "device": "desktop", "nfpr": 1, "filter": 1, "gl": "br"})
+        search_result = client.get_dict()
+        startup['Bot LinkedIn'] = 'TRUE'
+        if 'organic_results' in search_result:
+            if 'link' in search_result['organic_results'][0] and 'snippet' in search_result['organic_results'][0]:
+                snippet = search_result['organic_results'][0]['snippet']
+                if clean_site not in snippet:
+                    print('Site não estava no snippet.')
+                    continue
+                lkd = search_result['organic_results'][0]['link']
+                try:
+                    lkdRegex = re.compile(
+                        r'linkedin\.com\/company\/[^\/?"]*', re.IGNORECASE)
+                    mo = lkdRegex.search(lkd)
+                    if mo != None:
+                        lkd = "http://" + mo.group().lower().strip()
+                        startup['LinkedIn'] = lkd
+                        success_count += 1
+                        print(lkd)
+                    else:
+                        print('Link não bateu com regex: {}'.format(lkd))
+                except Exception as e:
+                    print(e)
+            else:
+                print('Resultado não tem link ou não tem snippet: {}'.format(search_result))
+        else:
+            print('Nenhum resultado encontrado.')
+
+    print('De {} startups, {} tiveram LinkedIn encontrado.'.format(count, success_count))
+
+    return startup_list

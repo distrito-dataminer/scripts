@@ -13,12 +13,18 @@ from unidecode import unidecode
 from utils import cleaner, enrich, ddmdata
 from utils.privatekeys import tokenTU as token
 
+replace = False
+
+if len(sys.argv) > 2:
+    if 'replace' in sys.argv:
+        replace = True
+
 # Popula um dicionário com as informações do CSV
 startup_list = ddmdata.readcsv(sys.argv[1])
 
 # Limpa os dados, roda o enriquecimento e limpa os dados novamente
 startup_list = cleaner.clean(startup_list)
-startup_list, error_list, endereco_list = enrich.enrich(startup_list)
+startup_list, error_list, endereco_list = enrich.enrich(startup_list, replace=replace)
 startup_list = cleaner.clean(startup_list)
 
 # Cria um CSV com as colunas relevantes para servir de output e escreve os dados limpos

@@ -7,7 +7,7 @@ import sys, csv, shutil, datetime
 from googleapiclient.discovery import build
 from utils import ddmdata, privatekeys, cleaner
 
-tags = ['Somos uma startup', 'é uma startup']
+tags = ['"EdTech" + "Brasil"', '"Startup" + "educação"', '"EdTech" + "Educação"']
 output = []
 
 # Conecta na API do Google com a chave de API providenciada
@@ -21,7 +21,7 @@ for tag in tags:
     while end_search == False:
         try:
             res = service.cse().list(
-                q='"{}"'.format(tag),
+                q='{}'.format(tag),
                 cx='002626537913979718585:pkjl9_mtdpm',
                 num = 10,
                 start = index,

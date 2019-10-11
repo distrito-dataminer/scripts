@@ -15,18 +15,26 @@ master_list = ddmdata.readcsv(sys.argv[1])
 slave_list = ddmdata.readcsv(sys.argv[2])
 
 noAdd = False
+replace = False
+id_type = 'ID'
 
-if len(sys.argv) == 4:
-    if sys.argv[3] == 'noadd':
+if len(sys.argv) > 3:
+    if 'noadd' in sys.argv:
         noAdd = True
+    if 'replace' in sys.argv:
+        replace = True
+    if 'estudo' in sys.argv:
+        id_type = 'ID Estudo'
 
 # Limpa os dados de ambas as listas
 master_list = cleaner.clean(master_list)
 slave_list = cleaner.clean(slave_list)
 output_filename = sys.argv[1].replace('.csv', '')+'_PLUS_'+sys.argv[2]
 
-#master_list = ddmdata.data_complete(master_list, slave_list)
-master_list = ddmdata.data_replace(master_list, slave_list)
+if replace:
+    master_list = ddmdata.data_replace(master_list, slave_list, no_add=noAdd)
+else:
+    master_list = ddmdata.data_complete(master_list, slave_list, no_add=noAdd)
 
 master_list = cleaner.clean(master_list)
 

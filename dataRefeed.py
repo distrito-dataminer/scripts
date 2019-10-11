@@ -58,9 +58,9 @@ def updateStartup(estudada, startup):
             currentList = startup[field].split(',')
             estudadaList = estudada[field].split(',')
             for item in estudadaList:
-                if item not in currentList:
+                if item != '' and item not in currentList:
                     currentList.append(item)
-                startup[field] = ','.join(currentList)
+            startup[field] = ','.join(currentList)
     if 'Descrição' in estudada and estudada['Descrição'] not in startup['Descrição']:
         startup['Descrição'] = startup['Descrição'] + '\n\n' + estudada['Descrição']
     return startup

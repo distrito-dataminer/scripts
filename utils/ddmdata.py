@@ -7,8 +7,15 @@ import ast
 from . import enrich
 from more_itertools import unique_everseen as unique
 from collections import OrderedDict
+import os, shutil
+import random
 
-# Popula um dicionário com as informações do CSV
+def extract_files(path, destpath):
+    if not os.path.exists(destpath):
+        os.mkdir(destpath)
+    for folderName, _, filenames in os.walk(path):
+        for filename in filenames:
+            shutil.copy((folderName + '\\'+ filename), destpath)
 
 
 def readcsv(csvpath):
@@ -50,11 +57,26 @@ def idict_from_csv(csvpath):
 
 
 
-def data_complete(master_list, slave_list, dictkey='Site', no_add=True):
+def random_sample(startup_list, length=200, criterion_list=[('Startup', True)]):
+    selection = []
+    while len(selection) < length:
+        random_startup = startup_list[random.randrange(0, len(startup_list))]
+        skip = False
+        for criterion in criterion_list:
+            if bool(random_startup[criterion[0]]) != criterion[1]:
+                skip = True
+                break
+        if skip == False:
+            selection.append(random_startup)
+    return selection
+
+def data_complete(master_list, slave_list, dictkey='Site', no_add=True, id_type='ID'):
     
+    last_id = 0
+
     for master in master_list:
-        if 'ID' in master and int(master['ID']) > last_id:
-            last_id = int(master['ID'])
+        if id_type in master and master[id_type] and int(master[id_type]) > last_id:
+            last_id = int(master[id_type])
         clean_master_key = master[dictkey].replace('http://', '').lower()
         if clean_master_key == '':
             continue
@@ -87,23 +109,25 @@ def data_complete(master_list, slave_list, dictkey='Site', no_add=True):
             for key in startup:
                 if key in clean_startup:
                     clean_startup[key] = startup[key]
-            if 'ID' in clean_startup and last_id != 0:
-                startup['ID'] = last_id + 1
+            if id_type in clean_startup and last_id != 0:
+                startup[id_type] = last_id + 1
                 last_id += 1
             master_list.append(clean_startup)
+
+        print('Startups novas: {}'.format(len(new_startups)))
 
     return master_list
 
 
 
-def data_replace(master_list, slave_list, dictkey='Site', no_add=False):
+def data_replace(master_list, slave_list, dictkey='Site', no_add=False, id_type='ID'):
 
     add_list = ['Descrição', 'Tags', 'Setor']
     last_id = 0
     
     for master in master_list:
-        if 'ID' in master and int(master['ID']) > last_id:
-            last_id = int(master['ID'])
+        if id_type in master and int(master[id_type]) > last_id:
+            last_id = int(master[id_type])
         clean_master_key = master[dictkey].replace('http://', '').lower().replace(' ', '')
         if clean_master_key == '':
             continue
@@ -145,8 +169,8 @@ def data_replace(master_list, slave_list, dictkey='Site', no_add=False):
             for key in startup:
                 if key in clean_startup:
                     clean_startup[key] = startup[key]
-            if 'ID' in clean_startup and last_id != 0:
-                clean_startup['ID'] = last_id + 1
+            if id_type in clean_startup and last_id != 0:
+                clean_startup[id_type] = last_id + 1
                 last_id += 1
             master_list.append(clean_startup)
 
