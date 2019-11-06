@@ -23,8 +23,8 @@ if len(sys.argv) >= 3:
     search_items = ddmdata.readcsv(sys.argv[2])
 else:
     search_items = [{'Número': '1',
-                     'Demanda': 'Big Data & Analytics',
-                     'Tags': 'big data, analytics'}]
+                     'Demanda': 'Goiás',
+                     'Tags': 'Goiás, Goiânia, Aparecida de Goiânia, Anápolis, Rio Verde, Águas Lindas de Goiás, Luziânia, Valparaíso de Goiás, Trindade, Novo Gama, Senador Canedo, Catalão, Itumbiara, Jataí, Caldas Novas, Planaltina, Santo Antônio do Descoberto, Cidade Ocidental, Goianésia, Inhumas, Quirinópolis, Niquelândia'}]
 
 if len(sys.argv) >=4 and sys.argv[3] == 'fullout':
     full_output = True
@@ -84,53 +84,61 @@ for item in search_items:
         match_count = 0
         matched_in = []
         matched_for = []
+        matched_terms = []
         for term in search_terms:
             term_pattern = re.compile('\\b{}\\b'.format(term), re.IGNORECASE)
             if re.search(term_pattern, unidecode(startup['Tags'])):
                 tag_matches.append(startup)
                 tag_dict[term] += 1
-                match_count += 1
+                match_count += unidecode(startup['Tags']).lower().count(term)
                 matched_in.append('Tags')
                 if not multi_tag:
                     matched_for.append(demanda)
+                matched_terms.append(term)
             if re.search(term_pattern, unidecode(startup['Descrição'])):
                 description_matches.append(startup)
                 desc_dict[term] += 1
-                match_count += 1
+                match_count += unidecode(startup['Descrição']).lower().count(term)
                 matched_in.append('Descrição')
                 if not multi_tag:
                     matched_for.append(demanda)
+                matched_terms.append(term)
             if re.search(term_pattern, unidecode(startup['Categoria'])) or re.search(term_pattern, unidecode(startup['Subcategoria'])):
                 category_matches.append(startup)
                 cat_dict[term] += 1
-                match_count += 1
+                match_count += (unidecode(startup['Categoria']).lower().count(term) + unidecode(startup['Subcategoria']).lower().count(term))
                 matched_in.append('Categoria')
                 if not multi_tag:
                     matched_for.append(demanda)
+                matched_terms.append(term)
         if multi_tag and match_count > 0:
             for term in extra_terms:
                 term_pattern = re.compile('\\b{}\\b'.format(term), re.IGNORECASE)
                 if re.search(term_pattern, unidecode(startup['Tags'])):
                     extra_tag_matches.append(startup)
                     tag_dict[term] += 1
-                    match_count += 1
+                    match_count += unidecode(startup['Tags']).lower().count(term)
                     matched_in.append('Tags')
                     matched_for.append(demanda)
+                    matched_terms.append(term)
                 if re.search(term_pattern, unidecode(startup['Descrição'])):
                     extra_description_matches.append(startup)
                     desc_dict[term] += 1
-                    match_count += 1
+                    match_count += unidecode(startup['Descrição']).lower().count(term)
                     matched_in.append('Descrição')
                     matched_for.append(demanda)
+                    matched_terms.append(term)
                 if re.search(term_pattern, unidecode(startup['Categoria'])) or re.search(term_pattern, unidecode(startup['Subcategoria'])):
                     extra_category_matches.append(startup)
                     cat_dict[term] += 1
-                    match_count += 1
+                    match_count += (unidecode(startup['Categoria']).lower().count(term) + unidecode(startup['Subcategoria']).lower().count(term))
                     matched_in.append('Categoria')
                     matched_for.append(demanda)
+                    matched_terms.append(term)
         startup['Match Count'] = match_count
         startup['Matched in'] = ','.join(list(unique(matched_in)))
         startup['Matched for'] = ','.join(list(unique(matched_for)))
+        startup['Matched terms'] = ','.join(list(unique(matched_terms)))
 
     tnd_matches = [match for match in tag_matches if match in description_matches]
 

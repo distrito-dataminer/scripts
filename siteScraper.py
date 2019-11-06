@@ -305,7 +305,7 @@ def getEmail(content, currentemails):
     return ','.join(result)
 
 # Pega o site de cada startup do CSV e roda cada uma das buscas as buscas nele
-recheck = True
+recheck = False
 
 for startup in startupList:
     if startup['ID']:

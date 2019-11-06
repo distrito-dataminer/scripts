@@ -99,4 +99,4 @@ invalidFacebook = ['http://facebook.com/sharer', 'http://facebook.com/share']
 
 invalidTwitter = ['http://twitter.com/share']
 
-invalidEmail = ['@sentry.wixpress.com', '@example', '@exemplo', '@sentry.io', 'communities-translations', 'ajax-loader', 'communities-blog-viewer-app', 'suporte@contabilizei.com.br']
+invalidEmail = ['@sentry', '@example', '@exemplo', '@sentry.io', 'communities-translations', 'ajax-loader', 'communities-blog-viewer-app', 'suporte@contabilizei.com.br']

@@ -27,6 +27,7 @@ logore = re.compile(r'(^.*)(\..*?$)')
 foundLogos = []
 logoList = []
 dupeLogos = []
+no_logo = []
 for filename in os.listdir(logoPath):
     logoList.append(filename)
 
@@ -53,16 +54,20 @@ for startup in startupList:
             else:
                 startup['LogoFound'] = True
                 foundLogos.append(logo)
-                if not os.path.exists(destPath + startup['Categoria']):
-                    os.mkdir(destPath + startup['Categoria'])
-                if not os.path.exists(destPath + startup['Categoria']+'\\'+startup['Subcategoria']):
-                    os.mkdir(destPath + startup['Categoria']+'\\'+startup['Subcategoria'])
-                shutil.copy(logoPath+logo, destPath + startup['Categoria']+'\\'+startup['Subcategoria']+'\\'+ logo)
+                if not os.path.exists(destPath + startup['Categoria'].strip()):
+                    os.mkdir(destPath + startup['Categoria'].strip())
+                if not os.path.exists(destPath + startup['Categoria'].strip()+'\\'+startup['Subcategoria'].strip()):
+                    os.mkdir(destPath + startup['Categoria'].strip()+'\\'+startup['Subcategoria'].strip())
+                shutil.copy(logoPath+logo, destPath + startup['Categoria'].strip()+'\\'+startup['Subcategoria'].strip()+'\\'+ logo)
+
+logoList = sorted(logoList, key=str.casefold)
 
 print('\nLOGOS QUE ESTÃO SEM STARTUP:')
 for logo in logoList:
     if logo not in foundLogos:
         print(logo)
+
+dupeLogos = sorted(dupeLogos, key=str.casefold)
 
 print('\nLOGOS DUPLICADOS:')
 for logo in dupeLogos:
@@ -71,4 +76,7 @@ for logo in dupeLogos:
 print('\nSTARTUPS QUE ESTÃO SEM LOGO:')
 for startup in startupList:
     if startup['LogoFound'] == False:
-        print(startup['Startup'])
+        no_logo.append(startup['Startup'])
+no_logo = sorted(no_logo, key=str.casefold)
+for item in no_logo:
+    print(item)

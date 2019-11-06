@@ -80,7 +80,7 @@ def clean(startupList):
                 lkdList = startup['LinkedIn'].strip().split(',')
                 for lkd in lkdList:
                     lkdRegex = re.compile(
-                        r'linkedin\.com\/company\/[^\/?"]*', re.IGNORECASE)
+                        r'linkedin\.com\/(company|showcase|school)\/[^\/?"]*', re.IGNORECASE)
                     mo = lkdRegex.search(lkd)
                     if mo != None:
                         lkd = "http://" + mo.group().lower().strip()
@@ -255,6 +255,8 @@ def clean(startupList):
                     if email != old_email:
                         print('Changed {} to {}'.format(old_email, email))
                         emailList.remove(old_email)
+                while '' in emailList:
+                    emailList.remove('')
                 startup['E-mail'] = ','.join(list(unique(emailList)))
 
         if 'Descrição' in startup:
@@ -500,3 +502,34 @@ def strip_fields(startup_list):
 def bare(name):
     bare_name = re.sub(r'[\W_]+', '', unidecode(name).lower().strip())
     return bare_name
+
+def bare_site(site):
+    site = re.sub(r'[\W_]+', '', unidecode(site).lower().strip()).replace('https', '').replace('http', '')
+    return site
+
+def dupe_detect(startup_list):
+    startup_list = clean(startup_list)
+    potential_dupes = []
+    for startup1, startup2 in itertools.combinations(startup_list, 2):
+        if 'Startup' in startup1 and startup1['Site'] and bare(startup1['Startup']) == bare(startup2['Startup']):
+            potential_dupes.append((startup1,startup2))
+        if 'Site' in startup1 and startup1['Site'] and startup1['Site'] == startup2['Site']:
+            potential_dupes.append((startup1,startup2))
+        if 'LinkedIn' in startup1 and startup1['LinkedIn'] and startup1['LinkedIn'] == startup2['LinkedIn']:
+            potential_dupes.append((startup1,startup2))
+        if 'CNPJ' in startup1 and startup1['CNPJ'] and startup1['CNPJ'] == startup2['CNPJ']:
+            potential_dupes.append((startup1,startup2))
+    potential_dupes = list(unique(potential_dupes))
+    with open('dupe_detect.txt', 'w') as f:
+        f.write('{} potential duplicate pairs detected:\n\n\n'.format(len(potential_dupes)))
+        for (dupe1, dupe2) in potential_dupes:
+            for field in ['ID', 'ID Estudo', 'Startup', 'Site', 'LinkedIn', 'CNPJ']:
+                if field in dupe1:
+                    f.write(dupe1[field] + ' - ')
+            f.write('\n')
+            for field in ['ID', 'ID Estudo', 'Startup', 'Site', 'LinkedIn', 'CNPJ']:
+                if field in dupe2:
+                    f.write(dupe2[field] + ' - ')
+            f.write('\n\n\n')
+        f.close()
+

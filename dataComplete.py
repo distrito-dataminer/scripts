@@ -32,9 +32,9 @@ slave_list = cleaner.clean(slave_list)
 output_filename = sys.argv[1].replace('.csv', '')+'_PLUS_'+sys.argv[2]
 
 if replace:
-    master_list = ddmdata.data_replace(master_list, slave_list, no_add=noAdd)
+    master_list = ddmdata.data_replace(master_list, slave_list, no_add=noAdd, id_type=id_type)
 else:
-    master_list = ddmdata.data_complete(master_list, slave_list, no_add=noAdd)
+    master_list = ddmdata.data_complete(master_list, slave_list, no_add=noAdd, id_type=id_type)
 
 master_list = cleaner.clean(master_list)
 

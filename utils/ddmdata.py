@@ -18,25 +18,24 @@ def extract_files(path, destpath):
             shutil.copy((folderName + '\\'+ filename), destpath)
 
 
-def readcsv(csvpath):
+def readcsv(csvpath, delimiter=','):
     startupList = []
     with open(csvpath, encoding="utf8") as fh:
-        rd = csv.DictReader(fh, delimiter=',')
+        rd = csv.DictReader(fh, delimiter=delimiter)
         for row in rd:
             startupList.append(row)
         fh.close()
     return startupList
 
 
-
-def writecsv(startupList, csvpath='output.csv'):
+def writecsv(startupList, csvpath='output.csv', delimiter=','):
     all_keys = []
     for item in startupList:
         for key in item.keys():
             if key not in all_keys:
                 all_keys.append(key)
     outputFile = open(csvpath, 'w', newline='', encoding="utf8")
-    outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=',')
+    outputWriter = csv.DictWriter(outputFile, all_keys, delimiter=delimiter)
     outputWriter.writeheader()
     outputWriter.writerows(startupList)
 
@@ -122,7 +121,7 @@ def data_complete(master_list, slave_list, dictkey='Site', no_add=True, id_type=
 
 def data_replace(master_list, slave_list, dictkey='Site', no_add=False, id_type='ID'):
 
-    add_list = ['Descrição', 'Tags', 'Setor']
+    add_list = ['Descrição', 'Tags', 'Setor', 'E-mail']
     last_id = 0
     
     for master in master_list:
@@ -346,6 +345,7 @@ def rd_convert(rd_list):
                   'Modelo do Público': 'Público',
                   'Nome Completo dos Fundadores': 'Founders',
                   'Número de funcionários da sua empresa': 'Faixa # de funcionários',
+                  'Número de funcionários': 'Funcionários LKD',
                   'Segmento da Startup': 'Setor',
                   'Site da Startup': 'Site',
                   'Startup': 'Startup'}
@@ -366,3 +366,11 @@ def rd_convert(rd_list):
         converted_list.append(converted_startup)
 
     return converted_list
+
+def data_points(data_list):
+    count = 0
+    for item in data_list:
+        for key in item:
+            if item[key] and item[key] != '-':
+                count += 1
+    return count

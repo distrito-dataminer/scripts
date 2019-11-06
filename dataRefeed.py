@@ -13,7 +13,7 @@ base = cleaner.clean(base)
 estudo = cleaner.clean(estudo)
 
 #Parâmetros - altere conforme necessário
-ignoreFields = ['ID', 'ID Estudo', 'Tirar da base?', 'Remover do estudo?', 'Por que tirar?', 'Verificada', 'Logo', 'Leads Abbott', 'Check', 'Match Count']
+ignoreFields = ['ID', 'ID Estudo', 'Tirar da base?', 'Remover do estudo?', 'Por que tirar?', 'Verificada', 'Logo', 'Leads Abbott', 'Check', 'Match count', 'Atenção especial', 'Setor Base', 'Matched in', 'Matched for', 'TOP']
 addFields = ['Setor', 'E-mail', 'Tags', 'Categoria', 'Subcategoria']
 
 def checkID(base, estudo):
@@ -60,9 +60,17 @@ def updateStartup(estudada, startup):
             for item in estudadaList:
                 if item != '' and item not in currentList:
                     currentList.append(item)
+            currentList = [item for item in currentList if item != '']
             startup[field] = ','.join(currentList)
     if 'Descrição' in estudada and estudada['Descrição'] not in startup['Descrição']:
         startup['Descrição'] = startup['Descrição'] + '\n\n' + estudada['Descrição']
+    if estudada['Por que tirar?'] == 'Não é EdTech':
+            setores = startup['Setor'].split(',')
+            while 'Educação' in setores:
+                setores.remove('Educação')
+            while 'EdTech' in setores:
+                setores.remove('EdTech')
+            startup['Setor'] = ','.join(setores)
     return startup
 
 base, estudo = checkID(base, estudo)
@@ -89,13 +97,15 @@ for estudada in estudo:
             if estudada['ID'] == startup['ID']:
                 startup = updateStartup(estudada, startup)
     else:
-        if estudada['Tirar da base?'] == 'FALSE' and estudada['Site'] != '':
+        if estudada['Site'] != '':
             lastID += 1
             newStartup = {}
             newStartup['ID'] = lastID
             estudada['ID'] = lastID
-            if estudada['Remover do estudo?'] == 'FALSE':
+            if estudada['Remover do estudo?'] == 'FALSE' or estudada['Tirar da base?'] == 'TRUE':
                 newStartup['Checado'] = estudoName
+            if estudada['Tirar da base?'] == 'TRUE':
+                newStartup['Tirar?'] = estudada['Por que tirar?']
             for key in estudada:
                 if key not in ignoreFields:
                     newStartup[key] = estudada[key]
@@ -105,7 +115,7 @@ for estudada in estudo:
 
 print('\n{} novas startups adicionadas!'.format(new_count))
 
-base = cleaner.clean(base)
+base = cleaner.score(cleaner.clean(base))
 estudo = cleaner.clean(estudo)
 
 ddmdata.writecsv(base, sys.argv[1].replace('.csv', '') + '_PLUS_'+ estudoName + '.csv')
