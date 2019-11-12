@@ -9,6 +9,7 @@ from more_itertools import unique_everseen as unique
 from collections import OrderedDict
 import os, shutil
 import random
+import re
 
 def extract_files(path, destpath):
     if not os.path.exists(destpath):
@@ -178,44 +179,58 @@ def data_replace(master_list, slave_list, dictkey='Site', no_add=False, id_type=
 
 
 def lkd_merge(startup_list, lkd_list):
+    lkd_dict = {
+        'company_id':'ID LKD', 
+        'follower_count': 'Seguidores LKD',
+        'name': 'Nome LKD',
+        'staff_count': 'Funcionários LKD',
+        'founded_year': 'Ano de fundação',
+        'tagline': 'Slogan LKD',
+        'website': 'Site LKD',
+        'standard_url': 'LinkedIn Final',
+        'auto_generated': 'Autogen LKD',
+        'staff_range': 'Porte LKD',
+        'company_type': 'Tipo LKD',
+        'city': 'Cidade',
+        'geographic_area': 'Estado',
+        'country': 'País',
+        'logo_url': 'Logo LKD',
+        'tags': 'Tags',
+        'phone': 'Telefone'
+        }
+    no_replace = []
+    add_fields = ['Tags', 'Telefone']
+    newline_fields = ['Descrição']
+    lkd_regex = re.compile(r'linkedin\.com\/(company|showcase|school)\/[^\/?"]*', re.IGNORECASE)
     address_list = []
     for startup in startup_list:
+        root_lkd = re.search(lkd_regex, startup['LinkedIn'])
+        if not root_lkd:
+            continue
+        root_lkd = root_lkd.group()
         for lkd in lkd_list:
-            if startup['LinkedIn'] == lkd['url'].replace("https://www.", "http://"):
-                if lkd['logo'] != '':
-                    startup['Logo LKD'] = lkd['logo']
-                if lkd['follower_count'] != '':
-                    startup['Seguidores LKD'] = lkd['follower_count']
-                if lkd['description'] != '':
-                    if 'Descrição' in startup:
-                        if lkd['description'] not in startup['Descrição']:
-                            startup['Descrição'] += '\n\n' + lkd['description']
-                    else:
-                        startup['Descrição'] = lkd['description']
-                if lkd['name'] != '':
-                    startup['Nome LKD'] = lkd['name']
-                if lkd['company_size'] != '':
-                    startup['Faixa # de funcionários'] = lkd['company_size']
-                if lkd['founded_year'] != '' or (lkd['founded_year'] != '' and startup['Ano de Fundação'] == ''):
-                    startup['Ano de fundação'] = lkd['founded_year']
-                if lkd['cover_image'] != '':
-                    startup['Foto de capa'] = lkd['cover_image']
-                if 'Cidade' not in startup or (lkd['city'] != '' and startup['Cidade'] == ''):
-                    startup['Cidade'] = lkd['city']
-                if 'Estado' not in startup or (lkd['state'] != '' and startup['Estado'] == ''):
-                    startup['Estado'] = lkd['state']
-                if 'País' not in startup or (lkd['country'] != '' and startup['País'] == ''):
-                    startup['País'] = lkd['country']
-                if lkd['number_of_self_declared_employees'] != '':
-                    startup['Funcionários LKD'] = lkd['number_of_self_declared_employees']
-                if lkd['tags'] != '':
-                    lkdtags = ast.literal_eval(lkd['tags'])
-                    if 'Tags' in startup:
-                        oldtags = startup['Tags'].split(',')
-                        newtags = unique(lkdtags + oldtags)
-                        startup['Tags'] = ','.join(newtags)
-                    else:
-                        startup['Tags'] = ','.join(lkdtags)
+            child_lkd = re.search(lkd_regex, lkd['url'])
+            if not child_lkd:
+                continue
+            child_lkd = child_lkd.group()
+            if root_lkd == child_lkd:
+                for key, value in lkd_dict.items():
+                    if value not in startup:
+                        startup[value] = ''
+                    if key in lkd and lkd[key]:
+                        if value in newline_fields:
+                            if lkd[key] not in startup[value]:
+                                startup[value] += ('\n\n' + lkd[key]).strip('\n ')
+                        elif value in add_fields:
+                            current_values = startup[value].split(',')
+                            new_values = lkd[key].split(',')
+                            final_values = sorted(list(unique(current_values + new_values)))
+                            startup[value] = ','.join(final_values)
+                        elif value in no_replace:
+                            if startup[value] == '':
+                                startup[value] = lkd[key]
+                        else:
+                            startup[value] = lkd[key]
                 if lkd['confirmed_locations']:
                     locations = ast.literal_eval(lkd['confirmed_locations'])
                     if 'line1' in locations[0]:

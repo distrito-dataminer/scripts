@@ -3,18 +3,18 @@
 # Define your item pipelines here
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+# See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
+import csv, logging, time
 
-import csv
-import logging
-from datetime import datetime
+class DdmSpidersPipeline(object):
+    def process_item(self, item, spider):
+        return item
 
 class CsvWriterPipeline(object):
 
     def open_spider(self, spider):
-        now = datetime.now().replace(microsecond = 0)
-        self.file = open(r"C:\test\{} Output {}.csv".format(spider.name, now.strftime('%Y-%m-%d %H.%M')), 'w', newline='', encoding='utf8')
+        self.file = open('C:\\Test\\{}_{}.csv'.format(spider.name, time.strftime('%Y-%m-%d_T%H.%M')), 'w', newline='', encoding='utf8')
         self.items = []
         self.colnames = []
 
@@ -27,10 +27,8 @@ class CsvWriterPipeline(object):
         self.file.close()
 
     def process_item(self, item, spider):
-        # add the new fields
         for f in item.keys():
             if f not in self.colnames:
                 self.colnames.append(f)
-        # add the item itself to the list
         self.items.append(item)
         return item

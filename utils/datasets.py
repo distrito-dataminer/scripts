@@ -88,7 +88,9 @@ cidades = {
     'curitiba': 'Curitiba',
     'chapeco': 'Chapecó',
     'vitoria': 'Vitória',
-    'joinville': 'Joinville'
+    'joinville': 'Joinville',
+    'jatai': 'Jataí',
+    'anapolis': 'Anápolis'
 }
 
 invalidsites = [
