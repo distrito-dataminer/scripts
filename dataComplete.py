@@ -14,6 +14,11 @@ master_list = ddmdata.readcsv(sys.argv[1])
 # Popula um dicionário com as informações do CSV slave
 slave_list = ddmdata.readcsv(sys.argv[2])
 
+for master in master_list:
+    for key in slave_list[0]:
+        if key not in master:
+            master[key] = ''
+
 noAdd = False
 replace = False
 id_type = 'ID'
@@ -32,9 +37,9 @@ slave_list = cleaner.clean(slave_list)
 output_filename = sys.argv[1].replace('.csv', '')+'_PLUS_'+sys.argv[2]
 
 if replace:
-    master_list = ddmdata.data_replace(master_list, slave_list, no_add=noAdd, id_type=id_type)
+    master_list = ddmdata.data_replace(master_list, slave_list, no_add=noAdd, id_type=id_type, dictkey='ID')
 else:
-    master_list = ddmdata.data_complete(master_list, slave_list, no_add=noAdd, id_type=id_type)
+    master_list = ddmdata.data_complete(master_list, slave_list, no_add=noAdd, id_type=id_type, dictkey='ID')
 
 master_list = cleaner.clean(master_list)
 

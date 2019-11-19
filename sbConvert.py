@@ -12,94 +12,101 @@ from utils import ddmdata, cleaner
 startup_list = []
 sb_path = 'C:\\Test\\SB\\'
 
-for sb_file in os.listdir(sb_path):
-    with open(sb_path+sb_file, encoding='utf8') as f:
-        print('Converting JSON for {}'.format(sb_file))
-        sb_json = f.read()
-        sb_dict = json.loads(sb_json)
-        if 'slug' not in sb_dict:
-            print(
-                'Possível erro com o arquivo {}. Pode causar problemas.'.format(sb_file))
-        startup_list.append(sb_dict)
+file_list = os.listdir(sb_path)
+json_list = []
+
+if 'all_jsons.txt' in file_list:
+    print('Using all_jsons.txt to speed up conversion.')
+    with open(sb_path+'all_jsons.txt', 'r', encoding='utf8') as f:
+        jsons_text = f.read()
         f.close()
+    sb_jsons = jsons_text.split('\n---SEPARATOR---\n')
+    sb_jsons = [x for x in sb_jsons if x]
+    for sb_json in sb_jsons:
+        sb_dict = json.loads(sb_json)
+        json_list.append(sb_dict)
+    print('Done.')
+
+else:
+    file_list = [item for item in file_list if '.json' in item]
+    for sb_file in file_list:
+        with open(sb_path+sb_file, encoding='utf8') as f:
+            print('Converting JSON for {}'.format(sb_file))
+            sb_json = f.read()
+            sb_dict = json.loads(sb_json)
+            json_list.append(sb_dict)
+            f.close()
+
+startup_list = [item for item in json_list if item and type(item) == dict]
+team_list = [item for item in json_list if item and type(item) == list]
 
 people_list = []
 address_list = []
 
 for startup in startup_list:
+
     if startup['slug']:
         startup['sb_url'] = 'http://startupbase.com.br/c/startup/{}'.format(
             startup['slug'])
-    if startup['founded_date']:
-        day, month, year = startup['founded_date'].split('/')
+
+    elif 'founded_at' in startup and startup['founded_at']:
+        day, month, year = startup['founded_at'].split('/')
         startup['founded_date'] = '{}-{}-{}'.format(year, month, day)
-    for link in startup['links']:
-        if link['link_type'] == 1:
-            startup['Site'] = link['url']
-        if link['link_type'] == 2:
-            startup['Facebook'] = link['url']
-        if link['link_type'] == 3:
-            startup['Twitter'] = link['url']
-        if link['link_type'] == 4:
-            startup['LinkedIn'] = link['url']
-        if link['link_type'] == 5:
-            startup['YouTube'] = link['url']
-        if link['link_type'] == 6:
-            startup['Instagram'] = link['url']
-        if link['link_type'] == 7:
-            startup['Medium'] = link['url']
-        if link['link_type'] == 9:
-            startup['App (App Store)'] = link['url']
-        if link['link_type'] == 10:
-            startup['App (Play Store)'] = link['url']
-    for group in startup['groups']:
-        startup['Setor SB'] = group['name']
-    startup_badges = sorted([badge['name'] for badge in startup['badges']])
+
+    if 'links' in startup and startup['links']:
+        for key in startup['links']:
+            startup[key] = startup['links'].get(key)
+
+    if 'segment' in startup and startup['segment']:
+        startup['Setor SB'] = startup['segment'].get('primary')
+    startup_badges = [badge.get('badge').get('name') for badge in startup.get('badges')]
     startup['Badges'] = ','.join(startup_badges)
-    if startup['startup']:
-        startup['annual_revenue'] = startup['startup']['annual_revenue']
-        startup['employees'] = startup['startup']['employees']
-        startup['has_funding'] = startup['startup']['has_funding']
-        if startup['startup']['model']:
-            startup['business_model'] = startup['startup']['model']['name']
-        if startup['startup']['phase']:
-            startup['business_phase'] = startup['startup']['phase']['name']
-        if startup['startup']['target']:
-            startup['business_target'] = startup['startup']['target']['name']
-    if startup['relations']:
-        for relation in startup['relations']:
-            person = {}
-            person['organization'] = relation['fk_organization']
-            person['member_id'] = relation['fk_member']
-            person['is_founder'] = relation['is_founder']
-            person['is_admin'] = relation['is_admin']
-            person['is_aware'] = relation['is_aware']
-            person['is_visible'] = relation['is_visible']
-            if relation['role']:
-                person['role'] = relation['role']['name']
-            if relation['member']:
-                member = relation['member']
-                person['first_name'] = member['first_name']
-                person['last_name'] = member['last_name']
-                person['email'] = member['email']
-                person['profile_image'] = member['profile_image']
-            for link in member['links']:
-                if link['link_type'] == 4:
-                    person['linkedin'] = link['url']
-            people_list.append(person)
+
+    if 'startup' in startup and startup['startup']:
+        info = startup.get('startup')
+        startup['annual_revenue'] = info.get('annual_revenue')
+        startup['employees'] = info.get('employees')
+        startup['has_funding'] = startup.get('has_funding')
+        if info.get('model'):
+            startup['business_model'] = info.get('model').get('name')
+        if info.get('phase'):
+            startup['business_phase'] = info.get('phase').get('name')
+        if info.get('target'):
+            startup['business_target'] = info.get('target').get('name')
+
     if startup['adresses']:
         for address in startup['adresses']:
             end = {}
             for key in address:
                 if key != 'city':
                     end[key] = address[key]
-            if address['city']:
-                end['city'] = address['city']['name']
-                end['state'] = address['city']['state']['uf']
+            if 'city' in address and address['city']:
+                end['city'] = address['city'].get('name')
+            if 'state' in address and address['state']:
+                end['state'] = address['state'].get('uf')
                 if address['is_parent'] == 1:
-                    startup['Cidade'] = address['city']['name']
-                    startup['Estado'] = address['city']['state']['uf']
+                    startup['Cidade'] = end['city']
+                    startup['Estado'] = end['state']
             address_list.append(end)
+
+
+for team in team_list:
+    for member in team:
+        person = {}
+        for key in member:
+            if key != 'user':
+                person[key] = member[key]
+        if 'user' in member and member['user']:
+            user_info = member.get('user')
+            for key in user_info:
+                if key != 'links':
+                    person[key] = user_info[key]
+            if 'links' in user_info and user_info['links']:
+                user_links = user_info['links']
+                for key in user_links:
+                    person[key] = user_links[key]
+        people_list.append(person)
+
 
 ddmdata.writecsv(startup_list, 'sb_startups.csv')
 ddmdata.writecsv(address_list, 'sb_addresses.csv')
@@ -114,20 +121,28 @@ conversion_dict = {
     'phone': 'Telefone',
     'short_description': 'Descrição curta',
     'description': 'Descrição',
-                   'tags': 'Tags',
-                   'profile_image': 'Logo SB',
-                   'is_active': 'Atividade SB',
-                   'is_verified': 'Verificada SB',
-                   'sb_url': 'StartupBase',
-                   'annual_revenue': 'Faturamento declarado',
-                   'employees': 'Faixa # de funcionários',
-                   'business_phase': 'Estágio da operação',
-                   'business_target': 'Público',
-                   'business_model': 'Modelo de negócio',
+    'tags': 'Tags',
+    'profile_image': 'Logo SB',
+    'is_active': 'Atividade SB',
+    'is_verified': 'Verificada SB',
+    'sb_url': 'StartupBase',
+    'annual_revenue': 'Faturamento declarado',
+    'employees': 'Faixa # de funcionários',
+    'business_phase': 'Estágio da operação',
+    'business_target': 'Público',
+    'business_model': 'Modelo de negócio',
+    'facebook': 'Facebook',
+    'website': 'Site',
+    'instagram': 'Instagram',
+    'linkedin': 'LinkedIn',
+    'medium': 'Medium',
+    'twitter': 'Twitter',
+    'googleplay': 'App (Play Store)',
+    'youtube': 'YouTube',
+    'appstore': 'App (App Store)'
 }
 
-same_name = ['Site', 'Setor SB', 'Badges', 'Cidade', 'Estado', 'Facebook',
-             'Twitter', 'Instagram', 'Youtube', 'App (Play Store)', 'App (App Store)', 'Medium']
+same_name = ['Setor SB', 'Badges', 'Cidade', 'Estado']
 
 for startup in startup_list:
     new_startup = {}
@@ -141,5 +156,5 @@ for startup in startup_list:
         year, month, day = startup['founded_date'].split('-')
         new_startup['Ano de fundação'] = year
     converted_startups.append(new_startup)
-        
+
 ddmdata.writecsv(converted_startups, 'sb_startups_converted.csv')

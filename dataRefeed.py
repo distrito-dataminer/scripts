@@ -12,6 +12,12 @@ estudoName = sys.argv[3]
 base = cleaner.clean(base)
 estudo = cleaner.clean(estudo)
 
+for estudada in estudo:
+    if 'ID' not in estudada:
+        estudada['ID'] = ''
+    if 'LinkedIn' not in estudada:
+        estudada['LinkedIn'] = ''
+
 #Parâmetros - altere conforme necessário
 ignoreFields = ['ID', 'ID Estudo', 'Tirar da base?', 'Remover do estudo?', 'Por que tirar?', 'Verificada', 'Logo', 'Leads Abbott', 'Check', 'Match count', 'Atenção especial', 'Setor Base', 'Matched in', 'Matched for', 'TOP']
 addFields = ['Setor', 'E-mail', 'Tags', 'Categoria', 'Subcategoria']
@@ -35,8 +41,9 @@ def checkID(base, estudo):
                 print("\nIgualando por nome:")
                 print(estudada['Startup'] + " --- " + estudada['Site'] + " --- " + estudada['LinkedIn'])
                 print(startup['Startup'] + " --- " + startup['Site'] + " --- " + startup['LinkedIn'])
-                startup['Site'] = estudada['Site']
+                #startup['Site'] = estudada['Site']
                 estudada['ID'] = startup['ID']
+                break
     return base, estudo
 
 def updateStartup(estudada, startup):
@@ -74,6 +81,7 @@ def updateStartup(estudada, startup):
     return startup
 
 base, estudo = checkID(base, estudo)
+ddmdata.writecsv(estudo, sys.argv[2].replace('.csv', '') + '_IDs_atualizadas.csv')
 
 lastID = 0
 for startup in base:
@@ -115,8 +123,12 @@ for estudada in estudo:
 
 print('\n{} novas startups adicionadas!'.format(new_count))
 
+for startup in base:
+    for key in base[0].keys():
+        if key not in startup:
+            startup[key] = ''
+
 base = cleaner.score(cleaner.clean(base))
 estudo = cleaner.clean(estudo)
 
 ddmdata.writecsv(base, sys.argv[1].replace('.csv', '') + '_PLUS_'+ estudoName + '.csv')
-ddmdata.writecsv(estudo, sys.argv[2].replace('.csv', '') + '_IDs_atualizadas.csv')

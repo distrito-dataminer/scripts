@@ -37,7 +37,7 @@ def clean(startupList):
                         newCnpjList.append(newCnpj)
                     else:
                         invalidCnpjs.append(
-                            startup['Startup'])
+                            startup['CNPJ'])
                 while '' in newCnpjList:
                     newCnpjList.remove('')
                 startup['CNPJ'] = ','.join(list(unique(newCnpjList)))
@@ -50,10 +50,10 @@ def clean(startupList):
                 if "http://" not in newSite:
                     newSite = "http://" + newSite
                 newSite = newSite.replace("www.", "")
-                siteRegex = re.compile(r'http:\/\/[^\/&?"]*', re.IGNORECASE)
+                siteRegex = re.compile(r'http:\/\/[^\/&?":]*', re.IGNORECASE)
                 mo = siteRegex.search(newSite)
                 if mo != None:
-                    newSite = mo.group().lower().strip().strip('/').strip()
+                    newSite = mo.group().lower().strip('/ ')
                 if newSite in datasets.invalidsites:
                     print('Site inválido: {}. Removendo.'.format(startup['Site']))
                     startup['Site'] = ''
@@ -67,7 +67,7 @@ def clean(startupList):
                 if "http://" not in newSite:
                     newSite = "http://" + newSite
                 newSite = newSite.replace("www.", "")
-                siteRegex = re.compile(r'http:\/\/[^\/&?"]*', re.IGNORECASE)
+                siteRegex = re.compile(r'http:\/\/[^\/&?":]*', re.IGNORECASE)
                 mo = siteRegex.search(newSite)
                 if mo != None:
                     newSite = mo.group().lower().strip().strip('/').strip()
@@ -273,6 +273,7 @@ def clean(startupList):
     if len(invalidCnpjs) > 0:
         print("CNPJs inválidos detectados - IDs e nomes:")
         print(*invalidCnpjs, sep='\n')
+        
     return startupList
 
 
@@ -505,6 +506,17 @@ def bare(name):
 
 def bare_site(site):
     site = re.sub(r'[\W_]+', '', unidecode(site).lower().strip()).replace('https', '').replace('http', '')
+    return site
+
+def clean_site(site):
+    site = site.lower().replace("https://", "http://")
+    if "http://" not in site:
+        site = "http://" + site
+    site = site.replace("www.", "")
+    site_regex = re.compile(r'http:\/\/[^\/&?":]*', re.IGNORECASE)
+    mo = site_regex.search(site)
+    if mo:
+        site = mo.group().lower().strip('/ ')
     return site
 
 def dupe_detect(startup_list):

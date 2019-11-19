@@ -12,18 +12,18 @@ import os
 from datetime import datetime
 
 cookies = {
-    'JSESSIONID': 'ajax:4339321431270984918',
-    'bcookie': 'v=2&802fae70-c1ac-4263-8fe1-642d05122631',
-    'bscookie': 'v=1&20191111195616302c7ee4-4d54-40be-8031-74da502ef491AQHmZysY-ozDtQO2hykEAvh1nGPEL5mh',
-    'lidc': 'b=TB81:g=1969:u=7:i=1573502180:t=1573588580:s=AQGFu682Oq2rHJtQ1Qj42hgLWTNkioE3',
-    'li_at': 'AQEDASrUviUDeZ4pAAABblwJ2tcAAAFugBZe100Azq9k4uwt3dSUiEpT0QI5H7tlRjiUBkHLXWuGJhDQP5xkwMZYiTZ-nDspqJ3Lppbiss4VWo9tg8_WhUyiaAty8zkfsOw9QXsF5gSLvo1RFP5ZEO2w',
+    'JSESSIONID': 'ajax:9147326614135056356',
+    'bcookie': 'v=2&64ad6a58-c268-414e-83ad-5107bc5242da',
+    'bscookie': 'v=1&20191119220446fd7fc5a5-78a5-483c-80d3-6b74765057b8AQHI7J0qHd9jRH4NhL-LJA09EDTsTn7F',
+    'lidc': 'b=TB81:g=1980:u=7:i=1574201089:t=1574287489:s=AQFreBXw1_fAR8f0P2FzxKkbx7oGzwST',
+    'sl': 'v=1&GJwiM',
     'liap': 'true',
-    'sl': 'v=1&4EtMa',
+    'li_at': 'AQEDASrUviUCuTzeAAABboWyXEkAAAFuqb7gSU4Abap7HjoPqzasZ607ia8vtzYyv_2oe0s0774WZOe6AyHM-GCh3Aj2PfZESLOFRms-FG4_62m6FJnm2COq8Dea47lm1gxJ0xbrUe4jfK20I6qA_3JJ',
     'lissc1': '1',
     'lissc2': '1',
     'lang': 'v=2&lang=en-us',
-    '_lipt': 'CwEAAAFuXAnvjgqcDpGJm-WJ9DFWWEAiwW-4sZxwtY_Vu4NHWNMbKPVBXhF9XjaO-g5O2eOHi2fb9qUjdOYK4uZUpTQ11DC1n88GM8lHAk3TNpXW2_SWHzvOwXQPLiUDfVFBlnzo2gNkAY3rThqaUYhOkY3VkKP0t0bOrH0bTmh4Mgzmi-9BL5xbZtWMhhk7ScUGT1tb7Kz5lQGU3DQ0wToxJ6l3zHlKiawTFSo',
-    'UserMatchHistory': 'AQKTo3L-_TNp_gAAAW5cCfYAROnphZTgyhtPc3byj0QuokDCpSNH3I_8sf16SeGNiRaezqXT3Tl36BzM6pXk6E3HC2CPNjkIwVLp1vJWsVfrmhf5AMdcMvXU_DljmrHz-I_3RLikdlipHcQ',
+    '_lipt': 'CwEAAAFuhbJkiELd0uDAYMtVLCCoLEEwxu7W28gGlJKvg_5e5E-c_VvM7S2q7fcdEQ4mnlbyzvsAVnUR9gPCTUpAdb7f618W4Fg3GW-1di_8HPav7nXiO5SZLnxBH-RKbD1rzWr8DRNSj1oHKi8JIhdNvevKiZdkGsRFj37WQ4QupG7jY_mX-peTWSytoybx7qnU3NW-O6AMI54wRCEy91hk1SYKSso7_w',
+    'UserMatchHistory': 'AQIMTtiwxXq_igAAAW6FspdSXE0VGDrEWo-O9gfrl0BB2BVupF3ALhGxOLAFaGeozRVXqxrpQdxgTjoPe9Yn8BlUFowXrYa84rnJYdEUFaGON2lKjQsN6h-qoRxrqSydkVLdQ9K34FEG2QQ',
 }
 
 headers = {
@@ -33,11 +33,14 @@ headers = {
     'DNT': '1',
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
+    'Cache-Control': 'max-age=0',
     'TE': 'Trailers',
 }
 
 lkd_regex = re.compile(r'linkedin\.com\/(company|showcase|school)\/[^\/?"]*', re.IGNORECASE)
 now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+
+no_replace = False
 
 class LkdSpider(scrapy.Spider):
 
@@ -55,7 +58,10 @@ class LkdSpider(scrapy.Spider):
     allowed_domains = ['www.linkedin.com']
     
     def start_requests(self):
-        urls = [startup['LinkedIn'] for startup in self.startup_list if startup['LinkedIn']]
+        if no_replace:
+            urls = [startup['LinkedIn'] for startup in self.startup_list if startup['LinkedIn'] and startup['Nome LKD'] == '']
+        else:
+            urls = [startup['LinkedIn'] for startup in self.startup_list if startup['LinkedIn']]
         for url in urls:
             url_lkd = re.search(lkd_regex, url)
             if url_lkd:

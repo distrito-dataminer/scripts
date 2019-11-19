@@ -84,7 +84,7 @@ def data_complete(master_list, slave_list, dictkey='Site', no_add=True, id_type=
             clean_slave_key = slave[dictkey].replace('http://', '').lower()
             if clean_slave_key == '':
                 continue
-            if clean_master_key == clean_slave_key or clean_master_key in clean_slave_key or clean_slave_key in clean_master_key:
+            if clean_master_key == clean_slave_key:
                 slave['Found'] = 'YES'
                 for key in master:
                     if key in slave:
