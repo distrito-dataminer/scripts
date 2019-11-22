@@ -7,7 +7,7 @@ from more_itertools import unique_everseen as unique
 key = privatekeys.serpapi_key
 num_results = 100
 start = 0
-queries = [{'Número': '1', 'Demanda': '', 'Busca': 'site:br.linkedin.com/company "Goiânia" + "Startup"'}]
+queries = [{'Número': '1', 'Demanda': '', 'Busca': 'site:br.linkedin.com/company "Brasília" + "startup"'}]
 demanda = ''
 location = 'Brazil'
 

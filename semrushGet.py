@@ -6,7 +6,7 @@ import sys
 
 key = privatekeys.semrush_key
 
-display_date = '2019-08-01'
+display_date = '2019-10-01'
 startup_list = cleaner.clean(ddmdata.readcsv(sys.argv[1]))
 startup_list = [startup for startup in startup_list if startup['Site'] != '']
 if 'Tirar?' in startup_list[0]:
@@ -65,7 +65,7 @@ semrush_results = ddmdata.readcsv('semrush_results.csv', delimiter=';')
 
 for startup in startup_list:
     for result in semrush_results:
-        if result['domain'] in startup['Site final']:
+        if 'Site final' in startup and startup['Site final'] and result['domain'] in startup['Site final']:
             result['Site final'] = startup['Site final']
             if 'ID' in startup and startup['ID']:
                 result['ID'] = startup['ID']
