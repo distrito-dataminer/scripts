@@ -131,4 +131,5 @@ for startup in base:
 base = cleaner.score(cleaner.clean(base))
 estudo = cleaner.clean(estudo)
 
+ddmdata.writecsv(estudo, sys.argv[2].replace('.csv', '') + '_IDs_atualizadas.csv')
 ddmdata.writecsv(base, sys.argv[1].replace('.csv', '') + '_PLUS_'+ estudoName + '.csv')

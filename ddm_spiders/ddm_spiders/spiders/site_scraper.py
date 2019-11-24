@@ -205,7 +205,7 @@ class SiteSpider(scrapy.Spider):
         elif 'https' not in failure.request.url:
             new_url = failure.request.url.replace('http://', 'https://')
             yield scrapy.Request(url=new_url, headers=headers, callback=self.parse, meta={'original_url': original_url}, errback=self.error_parse)
-            
+
         else:
             site_info = OrderedDict()
             site_info['base_url'] = original_url
