@@ -4,12 +4,68 @@
 import csv
 import itertools
 import ast
-from . import enrich
+from . import enrich, privatekeys
 from more_itertools import unique_everseen as unique
 from collections import OrderedDict
 import os, shutil
 import random
 import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+def read_sheet(sheet_name, worksheet_name):
+    scope = ['https://www.googleapis.com/auth/spreadsheets']
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(privatekeys.drive_auth, scope)
+    print('Authing with Google...')
+    client = gspread.authorize(creds)
+    print('Opening sheet...')
+    sheet = client.open(sheet_name)
+    print('Opening worksheet...')
+    worksheet = sheet.worksheet(worksheet_name)
+    print('Getting header...')
+    header = worksheet.row_values(1)
+    print('Getting data...')
+    data = worksheet.get_all_records()
+    ordered_data = []
+    for row in data:
+        new_record = OrderedDict()
+        for key in header:
+            new_record[key] = row[key]
+        ordered_data.append(new_record)
+    print('Data returned successfully.')
+    return ordered_data
+
+def write_to_sheet(sheet_name, worksheet_name, data):
+    scope = ['https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(privatekeys.drive_auth, scope)
+    print('Authing with Google...')
+    client = gspread.authorize(creds)
+    print('Opening sheet...')
+    sheet = client.open(sheet_name)
+    print('Checking existing worksheets...')
+    existing_worksheets = [worksheet.title for worksheet in sheet.worksheets()]
+    if worksheet_name in existing_worksheets:
+        print('Worksheet found. Opening...')
+        worksheet = sheet.worksheet(worksheet_name)
+        print('Clearing worksheet...')
+        worksheet.clear()
+    else:
+        print('Worksheet not found. Creating worksheet...')
+        sheet.add_worksheet(worksheet_name, len(data), len(data[0].keys()))
+        print('Worksheet created. Opening...')
+        worksheet = sheet.worksheet(worksheet_name)
+    print('Separating header from data...')
+    header = list(data[0].keys())
+    rows = [header] + [list(x.values()) for x in data]
+    cells = []
+    print('Getting cell values...')
+    for row_num, row in enumerate(rows):
+        for col_num, _ in enumerate(row):
+            cells.append(gspread.Cell(row_num + 1, col_num + 1, rows[row_num][col_num]))
+    print('Updating cells...')
+    worksheet.update_cells(cells)
+    print('Done.')
+
 
 def extract_files(path, destpath):
     if not os.path.exists(destpath):
