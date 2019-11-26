@@ -9,7 +9,7 @@ from pprint import pprint, pformat
 from collections import OrderedDict
 from unidecode import unidecode
 
-startup_list = ddmdata.readcsv(sys.argv[1])
+startup_list = ddmdata.read_sheet('Base Compilada - Startups', 'Startups')
 
 obligatory_fields = ['Tirar?', 'Tags', 'Descrição', 'Categoria', 'Subcategoria']
 for startup in startup_list:
@@ -23,8 +23,11 @@ if len(sys.argv) >= 3:
     search_items = ddmdata.readcsv(sys.argv[2])
 else:
     search_items = [{'Número': '1',
-                     'Demanda': 'Goiás',
-                     'Tags': 'Goiás, Goiânia, Aparecida de Goiânia, Anápolis, Rio Verde, Águas Lindas de Goiás, Luziânia, Valparaíso de Goiás, Trindade, Novo Gama, Senador Canedo, Catalão, Itumbiara, Jataí, Caldas Novas, Planaltina, Santo Antônio do Descoberto, Cidade Ocidental, Goianésia, Inhumas, Quirinópolis, Niquelândia'}]
+                     'Demanda': 'Tetrapak',
+                     'Tags': 'Tetrapak, Envase'},
+                     {'Número': '2',
+                     'Demanda': 'Descarte',
+                     'Tags': 'Descarte, Lixo, Reciclagem, Reciclável, Recicláveis, Logística Reversa, Economia Circular'}]
 
 if len(sys.argv) >=4 and sys.argv[3] == 'fullout':
     full_output = True
