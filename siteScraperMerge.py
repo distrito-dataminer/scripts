@@ -49,7 +49,7 @@ for result_group in result_groups:
             final_result['base_url'] = result['base_url']
             final_result['final_url'] = result['final_url']
             if result['final_url']:
-                final_result['Site'] = cleaner.clean_site(result['final_url'])
+                final_result['Site final'] = cleaner.clean_site(result['final_url'])
             else:
                 final_result['Site'] = cleaner.clean_site(result['base_url'])
 
@@ -65,7 +65,7 @@ for result_group in result_groups:
 final_results = cleaner.clean(final_results)
 
 add_keys = ['Facebook', 'LinkedIn', 'Twitter', 'Instagram', 'E-mail']
-replace_keys = ['Site', 'Response']
+replace_keys = ['Site final', 'Response']
 add_if_empty_keys = ['CNPJ']
 
 for startup in startup_list:
