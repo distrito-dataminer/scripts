@@ -14,7 +14,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 def read_sheet(sheet_name, worksheet_name):
-    scope = ['https://www.googleapis.com/auth/spreadsheets']
+    scope = ['https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_dict(privatekeys.drive_auth, scope)
     print('Authing with Google...')
     client = gspread.authorize(creds)
